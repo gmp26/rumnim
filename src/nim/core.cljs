@@ -1,4 +1,4 @@
-(ns ^:figwheel-always rum-figwheel-lein.core
+(ns ^:figwheel-always nim.core
   (:require [rum :as r]))
 
 (enable-console-print!)
@@ -106,6 +106,9 @@
   []
   (swap! world world-setup))
 
+(defn start! []
+  (swap! game game-setup))
+
 (defn change-dir! 
   [new-dir]
   (swap! world assoc :dir new-dir))
@@ -148,8 +151,18 @@
   (when (:running @world)
     (swap! world next-world)))
 
-;; render the world
+;; render the game
+(r/defc debug-game < r/reactive []
+  [:div {:class "debug"} "Game state: " (str (r/react game))])
 
+(r/defc render-game < r/reactive []
+  (debug-game)
+)
+
+(r/mount (render-game)
+         (.getElementById js/document "game"))
+
+;; render the world
 (r/defc debug < r/reactive []
   [:div {:class "debug"} "Debug of world: " (str (r/react world))])
 

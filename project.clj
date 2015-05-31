@@ -20,11 +20,11 @@
     :builds [{:id "dev"
               :source-paths ["src"]
               
-              :figwheel { :on-jsload "rum-figwheel-lein.core/on-js-reload" }
+              :figwheel { :on-jsload "nim.core/on-js-reload" }
 
-              :compiler {:main rum-figwheel-lein.core
+              :compiler {:main nim.core
                          :asset-path "js/compiled/out"
-                         :output-to "resources/public/js/compiled/rum_figwheel_lein.js"
+                         :output-to "resources/public/js/compiled/nim.js"
                          :output-dir "resources/public/js/compiled/out"
                          :optimizations :none
                          :source-map true
@@ -33,8 +33,8 @@
                          :warnings  {:single-segment-namespace false }}}
              {:id "min"
               :source-paths ["src"]
-              :compiler {:output-to "resources/public/js/compiled/rum_figwheel_lein.js"
-                         :main rum-figwheel-lein.core                         
+              :compiler {:output-to "resources/public/js/compiled/nim.js"
+                         :main nim.core                         
                          :optimizations :advanced
                          :pretty-print false
                          :warnings  {:single-segment-namespace false}}}]}
