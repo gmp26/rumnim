@@ -66,7 +66,31 @@
      :dir dir
      :apple apple}))
 
+;; utilities
+
+(defn rand-in-range [start end]
+  "generate an int inside [start, end] closed interval"
+  (+ start (rand-int (- (inc end) start))))
+
+(defn rand-heap [min-height max-height] 
+  "generate a heap sized from min-height to max-height"
+  (rand-in-range min-height max-height))
+
+(defn rand-heaps [min-heaps max-heaps min-height max-height]
+  "generate some heaps"
+  (let [heap-count (rand-in-range min-heaps max-heaps)
+        make-heap (fn [] (rand-heap min-height max-height))]
+    (repeatedly heap-count make-heap)))
+
+
+;; the game
+(defn game-setup
+  []
+  (let [heaps (rand-heaps 2 5 1 5)]
+    {:heaps heaps}))
+
 (defonce world (atom (world-setup)))
+(defonce game (atom (game-setup)))
 
 ;; manipulation of the world
 
