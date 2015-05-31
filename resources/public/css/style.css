@@ -1,0 +1,36 @@
+* {
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+}
+
+html, body  {
+	background-color: white;
+	color: black;
+	font-family: sans-serif;
+	/*
+	height: 100%;
+	width: 100%;
+	*/
+}
+
+button {
+	color: black;
+	background: white;
+	border: 1px solid black;
+	padding: 1ex 1em;
+	margin-right: 1em;
+}
+
+div {
+	margin-bottom: 1ex;
+}
+
+.debug {
+	font-size: small;
+	color: gray;
+}
+
+.playfield {
+	border: 1ex solid black;
+}
