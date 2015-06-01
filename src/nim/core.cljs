@@ -7,7 +7,6 @@
 
 (def scale 4)
 
-
 (def base-unit "ex")
 
 (defn unit
@@ -53,7 +52,12 @@
 ;; define the game state
 (defonce game (atom (game-setup)))
 
+;;
 ;; mutate game
+;;
+(defn start! []
+  (swap! game game-setup))
+
 (defn from-k-take-n [k n]
   (let [heaps (:heaps @game)
         new-heaps (heaps-at-k-take-n heaps k n)]
@@ -64,19 +68,67 @@
   [:circle {:cx x :cy y :r 0.5
             :style {:fill color}}])
 
-
+;;
 ;; render the game
+;;
 (r/defc debug-game < r/reactive []
   [:div {:class "debug"} "Game state: " (str (r/react game))])
 
+(r/defc render-heap < r/reactive [k n] 
+  [:circle {:cx (* 2 k)
+            :cy (- (- grid-size n) 0.5)
+            :r "0.5"}])
+
+
+(r/defc render-heaps < r/reactive []
+  [:g
+   (render-heap 3 0)   
+   (render-heap 3 1)
+   (render-heap 3 2)
+   (render-heap 3 3)
+   (render-heap 2 0)
+   (render-heap 2 1)]
+  )
+
+
 (r/defc render-game < r/reactive []
-  (debug-game))
+  [:div
+   (debug-game)
+   [:h3 "Play NIM" ]
+   [:div
+    [:svg {:class "playfield"
+           :width (unit grid-size) :height (unit grid-size)
+           :viewBox (str "0 0 " grid-size " " grid-size)}
+     (render-heaps)
+     ]
+    ]
+   ])
 
 (r/mount (render-game)
          (.getElementById js/document "game"))
 
-(defn start! []
-  (swap! game game-setup))
+;; (r/defc render-game < r/reactive []
+;;   [:div 
+;;    [:h3 (case (map (r/react game) [:running :alive])
+;;           [true true] "Eat up - press [p] to pause"
+;;           [false true] "Paused - press [p] to continue"
+;;           (str "You are dead! You ate " (dec (count (:snake (r/react world)))) " apples!  Restart with [r]"))]
+;;    [:div
+;;     [:svg {:class "playfield"
+;;            :width (unit grid-size) :height (unit grid-size)
+;;            :viewBox (str "0 0 " grid-size " " grid-size)}
+;;      (apple)
+;;      (snake)]]
+;;    [:div {:class "controlls"}   
+;;     [:button {:on-click restart!} "(R)estart"]
+;;     [:button {:on-click toggle-pause!} "Toggle (P)ause"]]
+;;    (debug)])
+
+
+
+
+
+
 
 (defn on-js-reload [] 
   (.log js/console "on-js-reload called"))
