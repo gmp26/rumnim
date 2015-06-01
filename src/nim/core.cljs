@@ -30,7 +30,7 @@
   "generate some heaps"
   (let [heap-count (rand-in-range min-heaps max-heaps)
         make-heap (fn [] (rand-heap min-height max-height))]
-    (repeatedly heap-count make-heap)))
+    (vec (repeatedly heap-count make-heap))))
 
 (defn heaps-at-k-take-n [heaps k n]
   "take n counters from kth heap" 
@@ -50,18 +50,14 @@
      :score {:A 0 :B 0 :C 0}
      :heaps heaps}))
 
-
-
 ;; define the game state
 (defonce game (atom (game-setup)))
 
 ;; mutate game
 (defn from-k-take-n [k n]
   (let [heaps (:heaps @game)
-        taker (fn [m] (assoc m :heaps (heaps-at-k-take-n heaps k n)))]
-    (swap! game taker)))
-
-
+        new-heaps (heaps-at-k-take-n heaps k n)]
+    (swap! game #(assoc % :heaps new-heaps))))
 
 (defn dot
   [[x y] color]
