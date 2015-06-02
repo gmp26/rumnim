@@ -68,7 +68,7 @@
 
 (r/defc render-item < r/reactive [k n]
   [:circle {:cx (+ 1 (* 2 k)) 
-            :on-click (fn [] (item-clicked k n))
+            :onclick (fn [] (item-clicked k n))
             :cy (- (- grid-size (- n 1)) 0.5)
             :r 0.5
             ;; :style {:fill "#fcc"}
@@ -92,8 +92,9 @@
 ))
 
 
+
 (r/defc render-heaps < r/reactive []
-  [:g (map render-heap (iterate inc 0) (:heaps (r/react game)))]
+  [:g (map draw-heap (iterate inc 0) (:heaps (r/react game)))]
   )
 
 
