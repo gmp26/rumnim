@@ -63,10 +63,17 @@
         new-heaps (heaps-at-k-take-n heaps k n)]
     (swap! game #(assoc % :heaps new-heaps))))
 
-(defn dot
-  [[x y] color]
-  [:circle {:cx x :cy y :r 0.5
-            :style {:fill color}}])
+(defn item-clicked [k n] 
+  (println (str "item-clicked " k " " n)))
+
+(r/defc render-item < r/reactive [k n]
+  [:circle {:cx (+ 1 (* 2 k)) 
+            :on-click (fn [] (item-clicked k n))
+            :cy (- (- grid-size (- n 1)) 0.5)
+            :r 0.5
+            ;; :style {:fill "#fcc"}
+}])
+
 
 ;;
 ;; render the game
@@ -74,20 +81,19 @@
 (r/defc debug-game < r/reactive []
   [:div {:class "debug"} "Game state: " (str (r/react game))])
 
-(r/defc render-heap < r/reactive [k n] 
-  [:circle {:cx (* 2 k)
-            :cy (- (- grid-size n) 0.5)
-            :r "0.5"}])
+(r/defc render-heap < r/reactive [k n]
+  [:g
+   (map #(render-item k %) (range 1 (inc n)))]
+  )
+
+(defn draw-heap [k n]
+  (if (> n 0)
+    (render-heap k n)
+))
 
 
 (r/defc render-heaps < r/reactive []
-  [:g
-   (render-heap 3 0)   
-   (render-heap 3 1)
-   (render-heap 3 2)
-   (render-heap 3 3)
-   (render-heap 2 0)
-   (render-heap 2 1)]
+  [:g (map render-heap (iterate inc 0) (:heaps (r/react game)))]
   )
 
 
