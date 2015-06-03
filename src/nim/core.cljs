@@ -86,13 +86,10 @@
     (if (> nsum 0)
       (let [ks (keep-indexed #(if (< (bit-xor nsum %2) %2) %1) heaps)
 ; todo: ks may be empty?
-            k (first ks)
+            k (rand-nth ks)
             n (nth heaps k)
             n' (bit-xor n nsum)]
-        (do
-          (println (str "k = " k " n = " n " return " [k (- n n')]))
-          [k (- n n')]
-          ))
+        [k (- n n')])
       (random-move heaps))))
 
 ;;
@@ -166,11 +163,12 @@
 
 (r/defc render-item < r/reactive [k n]
   "render item n in heap k"
-  [:circle {:cx (+ 1 (* 2 k)) 
-            :cy (- (- grid-size (- n 1)) 0.5)
+  [:circle {:cx (+ 1 (* 2 k))
+            :cy (+ 0.5 (- n 1))                 ;; dangling
+;            :cy (- (- grid-size (- n 1)) 0.5)  ;; standing
             :r 0.5
             :id (str "[" k " " n "]")
-            :fill (if (is-highlighted? k n) "#f00" "rgba(0,0,0,0.5)")
+            :fill (if (is-highlighted? k n) "#f00" "rgba(100,200,100,0.7)")
             :stroke "#000"
             :stroke-width "0.1" 
             :on-click (fn [e] (item-clicked e))
