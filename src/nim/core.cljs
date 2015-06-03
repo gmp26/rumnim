@@ -7,6 +7,7 @@
 
 (def scale 4)
 
+
 (def base-unit "ex")
 
 (defn unit
@@ -21,7 +22,7 @@
   "generate an int inside [start, end] closed interval"
   (+ start (rand-int (- (inc end) start))))
 
-(defn rand-heap [min-height max-height] 
+(defn rand-heap [min-height max-height]
   "generate a heap sized from min-height to max-height"
   (rand-in-range min-height max-height))
 
@@ -32,7 +33,7 @@
     (vec (repeatedly heap-count make-heap))))
 
 (defn heaps-at-k-take-n [heaps k n]
-  "take n counters from kth heap" 
+  "take n counters from kth heap"
   (if (contains? heaps k)
     (let [heap (nth heaps k)
           new-heap (if (>= heap n) (- heap n) 0)]
@@ -74,15 +75,21 @@
 (r/defc debug-game < r/reactive []
   [:div {:class "debug"} "Game state: " (str (r/react game))])
 
-(r/defc render-heap < r/reactive [k n] 
+
+(defn log-click [k n]
+  (println (str  "clicked" k " " n))
+)
+
+(r/defc render-heap < r/reactive [k n]
   [:circle {:cx (* 2 k)
             :cy (- (- grid-size n) 0.5)
-            :r "0.5"}])
+            :r "0.5"
+            :on-click (log-click k n)}])
 
 
 (r/defc render-heaps < r/reactive []
   [:g
-   (render-heap 3 0)   
+   (render-heap 3 0)
    (render-heap 3 1)
    (render-heap 3 2)
    (render-heap 3 3)
@@ -108,7 +115,7 @@
          (.getElementById js/document "game"))
 
 ;; (r/defc render-game < r/reactive []
-;;   [:div 
+;;   [:div
 ;;    [:h3 (case (map (r/react game) [:running :alive])
 ;;           [true true] "Eat up - press [p] to pause"
 ;;           [false true] "Paused - press [p] to continue"
@@ -119,7 +126,7 @@
 ;;            :viewBox (str "0 0 " grid-size " " grid-size)}
 ;;      (apple)
 ;;      (snake)]]
-;;    [:div {:class "controlls"}   
+;;    [:div {:class "controlls"}
 ;;     [:button {:on-click restart!} "(R)estart"]
 ;;     [:button {:on-click toggle-pause!} "Toggle (P)ause"]]
 ;;    (debug)])
@@ -130,34 +137,34 @@
 
 
 
-(defn on-js-reload [] 
+(defn on-js-reload []
   (.log js/console "on-js-reload called"))
 
 ;; helpers
 ;; (defn rand-in-size
-;;   ([padding] 
+;;   ([padding]
 ;;    (+ padding (rand-int (- grid-size (* 2 padding)))))
-;;   ([] 
+;;   ([]
 ;;    (rand-in-size 0)))
 
-;; (defn rand-pos 
-;;   ([padding] 
+;; (defn rand-pos
+;;   ([padding]
 ;;    (seq [(rand-in-size padding) (rand-in-size padding)]))
 ;;   ([]
 ;;    (rand-pos 0)))
 
-;; (defn collide? 
+;; (defn collide?
 ;;   [pos snake]
 ;;   (some #{pos} snake))
 
 ;; (defn rand-apple
 ;;   [snake]
-;;   (first 
-;;     (remove 
+;;   (first
+;;     (remove
 ;;       #(collide? % snake)
 ;;       (repeatedly rand-pos))))
 
-;; (defn hit-border? 
+;; (defn hit-border?
 ;;   [pos]
 ;;   (or (some #(< (dec grid-size) %) pos)
 ;;       (some neg? pos)))
@@ -167,7 +174,7 @@
 ;;                  :left [-1 0]
 ;;                  :right [1 0]})
 
-;; (defn next-snake-head [snake dir] 
+;; (defn next-snake-head [snake dir]
 ;;   (map + (first snake) (dir dir-offset)))
 
 ;; the world
@@ -176,7 +183,7 @@
 ;;   []
 ;;   (let [snake (seq [(rand-pos 2)])
 ;;         apple (rand-apple snake)
-;;         dir (rand-nth (keys dir-offset))] 
+;;         dir (rand-nth (keys dir-offset))]
 ;;     {:running false
 ;;      :alive true
 ;;      :snake snake
@@ -190,10 +197,10 @@
 
 ;; (defn toggle-pause!
 ;;   []
-;;   (swap! world 
-;;          #(assoc % :running 
-;;                  (and 
-;;                   (:alive %) 
+;;   (swap! world
+;;          #(assoc % :running
+;;                  (and
+;;                   (:alive %)
 ;;                   (not (:running %))))))
 
 ;; (defn restart!
@@ -201,7 +208,7 @@
 ;;   (swap! world world-setup))
 
 
-;; (defn change-dir! 
+;; (defn change-dir!
 ;;   [new-dir]
 ;;   (swap! world assoc :dir new-dir))
 
@@ -212,9 +219,9 @@
                   80 :pause
                   82 :restart })
 
-;; (defn handle-command! 
+;; (defn handle-command!
 ;;   [cmd]
-;;   (case cmd 
+;;   (case cmd
 ;;     :pause (toggle-pause!)
 ;;     :restart (restart!)
 ;;     (change-dir! cmd)))
@@ -226,19 +233,19 @@
 ;;         eat? (= next-head (:apple world))
 ;;         body (if eat? snake (butlast snake))
 ;;         alive (and (not (hit-border? next-head))
-;;                    (not (collide? next-head snake)))  
+;;                    (not (collide? next-head snake)))
 ;;         next-snake (conj body next-head)
 ;;         next-apple (if eat?
 ;;                      (rand-apple next-snake)
 ;;                      apple)]
-;;     (assoc world 
+;;     (assoc world
 ;;            :running (and alive (:running world))
 ;;            :alive alive
 ;;            :snake next-snake
 ;;            :apple next-apple
 ;;            )))
 
-;; (defn tick! 
+;; (defn tick!
 ;;   []
 ;;   (when (:running @world)
 ;;     (swap! world next-world)))
@@ -253,21 +260,21 @@
 ;; (r/defc snake < r/reactive []
 ;;   (let [snake (:snake (r/react world))
 ;;         head (first snake)
-;;         tail (rest snake)] 
-;;     (if (empty? tail) 
+;;         tail (rest snake)]
+;;     (if (empty? tail)
 ;;       (dot head "green")
 ;;       [:path {:d (let [cmb (fn [[x y]] (str x "," y))]
-;;                    (str 
-;;                      "M" (cmb head) 
+;;                    (str
+;;                      "M" (cmb head)
 ;;                      (apply str (map #(str " L" (cmb %)) tail))))
 ;;               :style {:fill "none"
-;;                       :stroke "green" 
+;;                       :stroke "green"
 ;;                       :stroke-width 1
 ;;                       :stroke-linecap "round"
 ;;                       :stroke-linejoin "round"}}])))
 
 ;; (r/defc render-world < r/reactive []
-;;   [:div 
+;;   [:div
 ;;    [:h3 (case (map (r/react world) [:running :alive])
 ;;           [true true] "Eat up - press [p] to pause"
 ;;           [false true] "Paused - press [p] to continue"
@@ -278,7 +285,7 @@
 ;;            :viewBox (str "0 0 " grid-size " " grid-size)}
 ;;      (apple)
 ;;      (snake)]]
-;;    [:div {:class "controlls"}   
+;;    [:div {:class "controlls"}
 ;;     [:button {:on-click restart!} "(R)estart"]
 ;;     [:button {:on-click toggle-pause!} "Toggle (P)ause"]]
 ;;    (debug)])
@@ -288,8 +295,8 @@
 ;; (r/mount (render-world)
 ;;          (.getElementById js/document "app"))
 
-;; (defonce key-watch 
-;;   (.addEventListener js/document "keydown" 
+;; (defonce key-watch
+;;   (.addEventListener js/document "keydown"
 ;;                      #(when-let [cmd (get key-mapping (.-keyCode %))]
 ;;                         (handle-command! cmd))))
 
