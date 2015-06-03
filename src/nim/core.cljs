@@ -55,6 +55,45 @@
 (def game
   (atom (game-setup)))
 
+(defn msb [n]
+  "find the most significant bit in an integer"
+  (.floor js/Math (/  (.log js/Math n) (.log js/Math 2)))
+)
+
+;;
+;; game strategy
+;;
+(defn nim-sum [heaps]
+  (reduce bit-xor heaps))
+
+(defn take-one-moves [heaps]
+  "return a list of possible moves which take 1, or nil if heaps are all empty"
+  (let [x-ifnz (fn [index heap-size] 
+                 (if (> heap-size 0) [index 1]))]
+    (seq (keep-indexed x-ifnz heaps))))
+
+(defn random-move [heaps]
+  "return a random move"
+  (let [possibles (take-one-moves heaps)]
+    (if possibles
+      (rand-nth possibles)
+      nil))
+  )
+
+(defn get-best-move [heaps]
+  "get the column and number to take for the best move"
+  (let [nsum (nim-sum heaps)]
+    (if (> nsum 0)
+      (let [ks (keep-indexed #(if (<= (msb nsum) (msb %2)) %1) heaps)
+; todo: ks may be empty?
+            k (first ks)
+            n (nth heaps k)
+            n' (bit-xor n nsum)]
+        (do
+          (println (str "k = " k " n = " n " return " [k (- n n')]))
+          ))
+      (random-move heaps))))
+
 ;;
 ;; mutate game
 ;;
@@ -69,18 +108,23 @@
       (swap! game #(assoc % :heaps new-heaps))
       (println "taking " n " from " k))))
 
-(defn un-prime! []
-  "unprime all"
-  (swap! game #(assoc % :primed nil)))
-
-(defn prime [k n]
-  "prime the nth item in heap k"
-  (swap! game #(assoc % :primed [k n])))
-
 (defn is-primed? [k n]
   "is item at col k, height n, primed for deletion?"
   (let  [[k' n' :as p] (:primed @game)]  
     (and p (= k k') (= n n'))))
+
+(defn is-highlighted? [k n]
+  "is item at col k, height n, highlighted for deletion?"
+  (let [[k' n' :as p] (:primed @game)]
+    (and p (= k k') (>= n n'))))
+
+(defn un-prime! []
+  "unprime all"
+  (swap! game #(assoc % :primed nil)))
+
+(defn prime! [k n]
+  "prime the nth item in heap k"
+  (swap! game #(assoc % :primed [k n])))
 
 (defn prime-or-delete! [k n]
   "item k n is to be primed for deletion, or deleted if already primed"
@@ -88,7 +132,12 @@
     (do
       (un-prime!)
       (from-k-take-n! k (- (nth (:heaps @game) k) (- n 1))))
-    (prime k n)))
+    (prime! k n)))
+
+(defn hint! []
+  "highlight the next best move"
+  (let [[k n] (get-best-move (:heaps @game))]
+    (prime! k n)))
 
 ;;
 ;; event handling
@@ -105,9 +154,6 @@
       (prime-or-delete! k n)
      )))
 
-
-
-
 ;;
 ;; rendering
 ;;
@@ -120,6 +166,9 @@
             :cy (- (- grid-size (- n 1)) 0.5)
             :r 0.5
             :id (str "[" k " " n "]")
+            :fill (if (is-highlighted? k n) "#f00" "rgba(0,0,0,0.5)")
+            :stroke "#000"
+            :stroke-width "0.1" 
             :on-click (fn [e] (item-clicked e))
             }])
 
@@ -148,6 +197,9 @@
            :viewBox (str "0 0 " grid-size " " grid-size)}
      (render-heaps)
      ]
+    [:div {:class "controlls"}
+     [:button {on-click start!} "New game"]
+     [:button {on-click hint!} "Hint"]]
     ]
    ])
 
