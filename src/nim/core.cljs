@@ -40,29 +40,55 @@
       (assoc heaps k new-heap))
     heaps))
 
-;; setup/restart the game
 (defn game-setup
   []
+  "setup or restart the game"
   (let [heaps (rand-heaps 2 5 1 5)]
-    {:level 1
-     :players [:A :C]
-     :player :A
-     :score {:A 0 :B 0 :C 0}
+    {:primed nil
      :heaps heaps}))
 
-;; define the game state
-(defonce game (atom (game-setup)))
+;;
+;; define game as the single? game state atom
+;;
+;; TODO: change to defonce
+;;
+(def game
+  (atom (game-setup)))
 
 ;;
 ;; mutate game
 ;;
 (defn start! []
+  "start a new game"
   (swap! game game-setup))
 
-(defn from-k-take-n [k n]
+(defn from-k-take-n! [k n]
   (let [heaps (:heaps @game)
         new-heaps (heaps-at-k-take-n heaps k n)]
-    (swap! game #(assoc % :heaps new-heaps))))
+    (do 
+      (swap! game #(assoc % :heaps new-heaps))
+      (println "taking " n " from " k))))
+
+(defn un-prime! []
+  "unprime all"
+  (swap! game #(assoc % :primed nil)))
+
+(defn prime [k n]
+  "prime the nth item in heap k"
+  (swap! game #(assoc % :primed [k n])))
+
+(defn is-primed? [k n]
+  "is item at col k, height n, primed for deletion?"
+  (let  [[k' n' :as p] (:primed @game)]  
+    (and p (= k k') (= n n'))))
+
+(defn prime-or-delete! [k n]
+  "item k n is to be primed for deletion, or deleted if already primed"
+  (if (is-primed? k n)
+    (do
+      (un-prime!)
+      (from-k-take-n! k (- (nth (:heaps @game) k) (- n 1))))
+    (prime k n)))
 
 ;;
 ;; event handling
@@ -71,25 +97,31 @@
 (defn you-clicked-on [[k n]]
   (println (str "you clicked on " k " " n)))
 
-(defn item-clicked [e] 
-  (do (.debug js/console (.-target e))
-      (println (-> e .-target .-id))
-      (you-clicked-on (reader/read-string (-> e .-target .-id)))))
+(defn item-clicked [event]
+  "read [col row] form from event.target.id string"
+  (let [[k n] (reader/read-string (-> event .-target .-id))]
+    (do
+      (println "prime-or-delete " k " " n)
+      (prime-or-delete! k n)
+     )))
+
+
+
+
+;;
+;; rendering
+;;
+(r/defc debug-game < r/reactive []
+  [:div {:class "debug"} "Game state: " (str (r/react game))])
 
 (r/defc render-item < r/reactive [k n]
+  "render item n in heap k"
   [:circle {:cx (+ 1 (* 2 k)) 
             :cy (- (- grid-size (- n 1)) 0.5)
             :r 0.5
             :id (str "[" k " " n "]")
             :on-click (fn [e] (item-clicked e))
             }])
-
-
-;;
-;; render the game
-;;
-(r/defc debug-game < r/reactive []
-  [:div {:class "debug"} "Game state: " (str (r/react game))])
 
 (r/defc render-heap < r/reactive [k n]
   [:g
