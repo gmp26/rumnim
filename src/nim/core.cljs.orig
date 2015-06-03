@@ -1,12 +1,12 @@
 (ns ^:figwheel-always nim.core
-    (:require [rum :as r]
-              [cljs.reader :as reader]))
+  (:require [rum :as r]))
 
 (enable-console-print!)
 
 (def grid-size 12)
 
 (def scale 4)
+
 
 (def base-unit "ex")
 
@@ -64,25 +64,16 @@
         new-heaps (heaps-at-k-take-n heaps k n)]
     (swap! game #(assoc % :heaps new-heaps))))
 
-;;
-;; event handling
-;;
-
-(defn you-clicked-on [[k n]]
-  (println (str "you clicked on " k " " n)))
-
-(defn item-clicked [e] 
-  (do (.debug js/console (.-target e))
-      (println (-> e .-target .-id))
-      (you-clicked-on (reader/read-string (-> e .-target .-id)))))
+(defn item-clicked [k n] 
+  (println (str "item-clicked " k " " n)))
 
 (r/defc render-item < r/reactive [k n]
   [:circle {:cx (+ 1 (* 2 k)) 
+            :onclick (fn [] (item-clicked k n))
             :cy (- (- grid-size (- n 1)) 0.5)
             :r 0.5
-            :id (str "[" k " " n "]")
-            :on-click (fn [e] (item-clicked e))
-            }])
+            ;; :style {:fill "#fcc"}
+}])
 
 
 ;;
@@ -91,6 +82,28 @@
 (r/defc debug-game < r/reactive []
   [:div {:class "debug"} "Game state: " (str (r/react game))])
 
+<<<<<<< HEAD
+
+(defn log-click [k n]
+  (println (str  "clicked" k " " n))
+)
+
+(r/defc render-heap < r/reactive [k n]
+  [:circle {:cx (* 2 k)
+            :cy (- (- grid-size n) 0.5)
+            :r "0.5"
+            :on-click (log-click k n)}])
+
+
+(r/defc render-heaps < r/reactive []
+  [:g
+   (render-heap 3 0)
+   (render-heap 3 1)
+   (render-heap 3 2)
+   (render-heap 3 3)
+   (render-heap 2 0)
+   (render-heap 2 1)]
+=======
 (r/defc render-heap < r/reactive [k n]
   [:g
    (map #(render-item k %) (range 1 (inc n)))]
@@ -101,8 +114,11 @@
     (render-heap k n)
 ))
 
+
+
 (r/defc render-heaps < r/reactive []
   [:g (map draw-heap (iterate inc 0) (:heaps (r/react game)))]
+>>>>>>> d4a9b8702d3c2983b502fb653b32f257b195d4af
   )
 
 
