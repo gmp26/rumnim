@@ -43,7 +43,7 @@
 (defn game-setup
   []
   "setup or restart the game"
-  (let [heaps (rand-heaps 2 5 1 5)]
+  (let [heaps (rand-heaps 2 6 1 12)]
     {:primed nil
      :heaps heaps}))
 
@@ -84,13 +84,14 @@
   "get the column and number to take for the best move"
   (let [nsum (nim-sum heaps)]
     (if (> nsum 0)
-      (let [ks (keep-indexed #(if (<= (msb nsum) (msb %2)) %1) heaps)
+      (let [ks (keep-indexed #(if (< (bit-xor nsum %2) %2) %1) heaps)
 ; todo: ks may be empty?
             k (first ks)
             n (nth heaps k)
             n' (bit-xor n nsum)]
         (do
           (println (str "k = " k " n = " n " return " [k (- n n')]))
+          [k (- n n')]
           ))
       (random-move heaps))))
 
@@ -126,18 +127,21 @@
   "prime the nth item in heap k"
   (swap! game #(assoc % :primed [k n])))
 
+(defn at-k-leave-n! [k n]
+  (- (nth (:heaps @game) k) (- n 1)))
+
 (defn prime-or-delete! [k n]
   "item k n is to be primed for deletion, or deleted if already primed"
   (if (is-primed? k n)
     (do
       (un-prime!)
-      (from-k-take-n! k (- (nth (:heaps @game) k) (- n 1))))
+      (from-k-take-n! k (at-k-leave-n! k n)))
     (prime! k n)))
 
 (defn hint! []
   "highlight the next best move"
   (let [[k n] (get-best-move (:heaps @game))]
-    (prime! k n)))
+    (prime! k (at-k-leave-n! k n))))
 
 ;;
 ;; event handling
