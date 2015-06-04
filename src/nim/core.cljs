@@ -5,14 +5,13 @@
 (enable-console-print!)
 
 (def grid-size 12)
+(def scale 80)
 
-(def scale 4)
-
-(def base-unit "ex")
+(def base-unit "")
 
 (defn unit
   [n]
-  (str (* scale n) base-unit))
+  (str base-unit))
 
 (def tick-in-ms 250)
 
@@ -43,7 +42,8 @@
 (defn game-setup
   []
   "setup or restart the game"
-  (let [heaps (rand-heaps 2 6 1 12)]
+  (let [heaps (rand-heaps 2 
+6 1 12)]
     {:primed nil
      :heaps heaps}))
 
@@ -55,15 +55,11 @@
 (def game
   (atom (game-setup)))
 
-(defn msb [n]
-  "find the most significant bit in an integer"
-  (.floor js/Math (/  (.log js/Math n) (.log js/Math 2)))
-)
-
 ;;
 ;; game strategy
 ;;
 (defn nim-sum [heaps]
+  "Calculate the nim-sum of all heaps by xoring them all together"
   (reduce bit-xor heaps))
 
 (defn take-one-moves [heaps]
@@ -188,20 +184,24 @@
   [:g (map draw-heap (iterate inc 0) (:heaps (r/react game)))]
   )
 
+(r/defc render-toolbar < r/reactive []
+  [:div {:class "controlls"}
+   [:button {on-click start!} "New game"]
+   [:button {on-click hint!} "Hint"]]
+)
 
 (r/defc render-game < r/reactive []
   [:div
+   [:h1 "Play NIM" ]
    (debug-game)
-   [:h3 "Play NIM" ]
+   (render-toolbar)
    [:div
     [:svg {:class "playfield"
            :width (unit grid-size) :height (unit grid-size)
            :viewBox (str "0 0 " grid-size " " grid-size)}
      (render-heaps)
      ]
-    [:div {:class "controlls"}
-     [:button {on-click start!} "New game"]
-     [:button {on-click hint!} "Hint"]]
+    (render-toolbar)
     ]
    ])
 
