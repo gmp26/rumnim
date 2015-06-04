@@ -1,6 +1,6 @@
 (defproject rum-figwheel-lein "0.1.0-SNAPSHOT"
   :description "rumnim is a nim environment based on cljs and rum"
-  :url "http://example.com/FIXME"
+  :url "https://github.com/gmp26/rumnim"
   :license {:name "MIT"
             :url "http://opensource.org/licenses/MIT"}
 
