@@ -35,8 +35,7 @@
 (defn game-setup
   []
   "setup or restart the game"
-  (let [heaps (rand-heaps 2 
-6 1 12)]
+  (let [heaps (rand-heaps 2 6 1 12)]
     {:primed nil
      :heaps heaps}))
 
