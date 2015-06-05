@@ -4,9 +4,9 @@
 
 (enable-console-print!)
 
-(def grid-size 12)
-
 (def tick-in-ms 250)
+
+(def root2 (.sqrt js/Math 2))
 
 ;; utilities
 
@@ -45,7 +45,7 @@
 ;;
 ;; TODO: change to defonce
 ;;
-(def game
+(defonce game
   (atom (game-setup)))
 
 ;;
@@ -144,17 +144,61 @@
       (prime-or-delete! k n)
      )))
 
+
+;;
+;; layout calculations
+;;
+(defn msb [n]
+  "calculates the bits needed to represent a natural number"
+  (.floor js/Math (/ (.log js/Math n) (.log js/Math 2))))
+
+(defn space-for [n]
+  "the maximum value that can be stored in the same bit width as n"
+  (.pow js/Math 2 (msb n)))
+
+(defn max-bits [heaps]
+  "max breadth to accommodate all heaps"
+  (let [maxn (apply max heaps)]
+    (msb maxn)))
+
+(defn max-breadth [heaps]
+  "finds the maximum breadth of a given set of heaps"
+  (.pow js/Math 2 (max-bits heaps)))
+
+(defn grid-breadth [heaps]
+  "finds the grid width needed for equally spaced heaps after max pairing"
+  (* (max-breadth heaps) (count heaps)))
+
+(defn optimum-grid-breadth [heaps]
+  "finds the grid width needed for adaptively spaced heaps after max pairing"
+  (apply + (map space-for heaps)))
+
+(defn heap-offsets [heaps]
+  "finds the grid width needed for adaptively spaced heaps after max pairing"
+  (drop-last (reductions + 0 (map space-for heaps))))
+
+(defn kth-heap-offset [heaps k]
+  "the x-offset of the kth packed heap"
+  (+ (/ (space-for (nth heaps k)) 2) 
+     (reduce + 0 (take k (map space-for heaps))))
+  )
+
+(defn grid-size [heaps] 
+  (* root2 (optimum-grid-breadth heaps)))
+
 ;;
 ;; rendering
 ;;
 (r/defc debug-game < r/reactive []
   [:div {:class "debug"} "Game state: " (str (r/react game))])
 
-(r/defc render-item < r/reactive [k n]
+(r/defc render-item < r/reactive [heaps k n]
   "render item n in heap k"
-  [:circle {:cx (+ 1 (* 2 k))
-            :cy (+ 0.5 (- n 1))                 ;; dangling
-;            :cy (- (- grid-size (- n 1)) 0.5)  ;; standing
+  (println (str heaps " k=" k " n=" n " offset=" 
+                (kth-heap-offset heaps k)
+                ))
+  [:circle {:cx (* root2 (kth-heap-offset heaps k))
+            :cy (* root2 (+ 0.5 (- n 1))) ;; dangling
             :r 0.5
             :id (str "[" k " " n "]")
             :fill (if (is-highlighted? k n) "#f00" "rgba(100,200,100,0.7)")
@@ -163,19 +207,21 @@
             :on-click (fn [e] (item-clicked e))
             }])
 
-(r/defc render-heap < r/reactive [k n]
+(r/defc render-heap < r/reactive [heaps k n]
   [:g
-   (map #(render-item k %) (range 1 (inc n)))]
+   (map #(render-item heaps k %) (range 1 (inc n)))]
   )
 
-(defn draw-heap [k n]
+(defn draw-heap [heaps k n]
+  ;; (println (str heaps " k " k " n " n))
   (if (> n 0)
-    (render-heap k n)
+    (render-heap heaps k n)
 ))
 
 (r/defc render-heaps < r/reactive []
-  [:g (map draw-heap (iterate inc 0) (:heaps (r/react game)))]
-  )
+  (let [heaps (:heaps (r/react game))] 
+    [:g (map-indexed #(draw-heap heaps %1 %2) heaps)]
+    ))
 
 (r/defc render-toolbar < r/reactive []
   [:div {:class "controlls"}
@@ -184,19 +230,21 @@
 )
 
 (r/defc render-game < r/reactive []
-  [:div
-   [:h1 "Play NIM" ]
-   (debug-game)
-   (render-toolbar)
-   [:div
-    [:svg {:class "playfield"
-           :width grid-size :height grid-size
-           :viewBox (str "0 0 " grid-size " " grid-size)}
-     (render-heaps)
-     ]
-    (render-toolbar)
-    ]
-   ])
+  (let [heaps (:heaps (r/react game))
+        gsz (grid-size heaps)]
+    [:div
+     [:h1 "Play NIM" ]
+     (debug-game)
+     (render-toolbar)
+     [:div
+      [:svg {:class "playfield"
+             :width gsz :height gsz
+             :viewBox (str "0 0 " gsz " " gsz)}
+       (render-heaps)
+       ]
+      (render-toolbar)
+      ]
+     ]))
 
 (r/mount (render-game)
          (.getElementById js/document "game"))
