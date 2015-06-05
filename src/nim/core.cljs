@@ -8,6 +8,10 @@
 
 (def root2 (.sqrt js/Math 2))
 
+(def xscale 0.5)
+
+(def yscale 1)
+
 ;; utilities
 
 (defn rand-in-range [start end]
@@ -197,15 +201,16 @@
   (println (str heaps " k=" k " n=" n " offset=" 
                 (kth-heap-offset heaps k)
                 ))
-  [:circle {:cx (* root2 (kth-heap-offset heaps k))
-            :cy (* root2 (+ 0.5 (- n 1))) ;; dangling
-            :r 0.5
-            :id (str "[" k " " n "]")
-            :fill (if (is-highlighted? k n) "#f00" "rgba(100,200,100,0.7)")
-            :stroke "#000"
-            :stroke-width "0.1" 
-            :on-click (fn [e] (item-clicked e))
-            }])
+  [:g {:transform (str "scale(" xscale " " yscale ")")}
+   [:circle {:cx (* root2 (kth-heap-offset heaps k))
+             :cy (* root2 (+ 0.5 (- n 1))) ;; dangling
+             :r 0.5
+             :id (str "[" k " " n "]")
+             :fill (if (is-highlighted? k n) "#f00" "rgba(100,200,100,0.7)")
+             :stroke "#000"
+             :stroke-width "0.1" 
+             :on-click (fn [e] (item-clicked e))
+             }]])
 
 (r/defc render-heap < r/reactive [heaps k n]
   [:g
@@ -231,15 +236,17 @@
 
 (r/defc render-game < r/reactive []
   (let [heaps (:heaps (r/react game))
-        gsz (grid-size heaps)]
+        gsz (grid-size heaps)
+        xsz (* gsz xscale)
+        ysz (* gsz yscale)]
     [:div
      [:h1 "Play NIM" ]
      (debug-game)
      (render-toolbar)
      [:div
       [:svg {:class "playfield"
-             :width gsz :height gsz
-             :viewBox (str "0 0 " gsz " " gsz)}
+             :width xsz :height ysz
+             :viewBox (str "0 0 " xsz " " ysz)}
        (render-heaps)
        ]
       (render-toolbar)
