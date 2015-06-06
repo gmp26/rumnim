@@ -1,34 +1,61 @@
 * {
-	-webkit-box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
 }
 
-html, body  {
-	background-color: white;
-	color: black;
-	font-family: sans-serif;
-	/*
+html, body {
+    background-color: white;
+    color: black;
+    font-family: sans-serif;
+/*
 	height: 100%;
 	width: 100%;
-	*/
+*/
+}
+.controlls {
+    background: white;
+    padding: 5px 2px 5px 2px;
+}
+svg {
+    margin: 0;
+}
+
+.controlls * {
+   font-size: 11px;
+   font-weight: bold;
 }
 
 button {
-	color: black;
-	background: white;
-	border: 1px solid black;
-	padding: 1ex 1em;
-	margin-right: 1em;
+    color: white;
+    background: rgb(227, 103, 0);
+    border: 1px solid black;
+    padding: 1ex 1em;
+    margin-right: 1ex;
+}
+button:hover {
+    background: red;
+}
+
+select {
+    color: white;
+    background: grey;
+    border: 1px solid black;
+    padding: 1ex 1em;
+    height: 26px;
+    margin-right: 1ex;
+}
+select:hover {
+    background: blue;
 }
 
 div {
-	margin-bottom: 1ex;
+    margin-bottom: 1ex;
 }
 
 .debug {
-	font-size: small;
-	color: gray;
+    font-size: small;
+    color: gray;
 }
 
 .playfield {

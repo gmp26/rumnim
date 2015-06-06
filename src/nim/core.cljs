@@ -36,11 +36,13 @@
       (assoc heaps k new-heap))
     heaps))
 
-(defn game-setup
-  []
+(def level-spec [2 6 1 12])
+
+(def start-level 1)
+
+(defn game-setup []
   "setup or restart the game"
-  (let [heaps (rand-heaps 2 
-6 1 12)]
+  (let [heaps (apply rand-heaps level-spec)]
     {:primed nil
      :heaps heaps}))
 
@@ -85,12 +87,19 @@
         [k (- n n')])
       (random-move heaps))))
 
+
+
 ;;
 ;; mutate game
 ;;
 (defn start! []
   "start a new game"
   (swap! game game-setup))
+
+(defn change-level! [event]
+  (.debug js/console (-> event .-target .-value))
+  (let [new-level (-> event .-target .-value)]
+    (swap! game #(assoc % :level new-level))))
 
 (defn from-k-take-n! [k n]
   (let [heaps (:heaps @game)
@@ -230,8 +239,15 @@
 
 (r/defc render-toolbar < r/reactive []
   [:div {:class "controlls"}
-   [:button {on-click start!} "New game"]
-   [:button {on-click hint!} "Hint"]]
+   [:button {:on-click start!} "New game"]
+   [:button {:on-click hint!} "Hint"]
+   [:select {:on-change change-level! :defaultValue start-level}
+    [:option {:value 1} "Level 1"]
+    [:option {:value 2} "Level 2"]
+    [:option {:value 3} "Level 3"]
+    [:option {:value 4} "Level 4"]
+    [:option {:value 5} "Level 5"]
+    ]]
 )
 
 (r/defc render-game < r/reactive []
