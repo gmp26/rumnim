@@ -10,10 +10,6 @@
 
 ;; utilities
 
-;; don't assume es6 yet!
-(def log2 #(/ (Math.log %) (Math.log 2)))
-(def msb #(Math.floor (log2 %)))
-
 (defn rand-in-range [start end]
   "generate an int inside [start, end] closed interval"
   (+ start (rand-int (- (inc end) start))))
@@ -36,79 +32,20 @@
       (assoc heaps k new-heap))
     heaps))
 
-(defn max-pairing [heaps]
-  (msb (apply max heaps))
-  )
-
-(def level-spec 
-  [2 6 1 12])
-
-(defn game-setup []
+(defn game-setup
+  []
   "setup or restart the game"
-  (let [heaps (apply rand-heaps level-spec)]
+  (let [heaps (rand-heaps 2 6 1 12)]
     {:primed nil
-     :heaps heaps
-     :level 1
-     :round 1
-     :pairing 0}))
+     :heaps heaps}))
 
 ;;
 ;; define game as the single? game state atom
 ;;
 ;; TODO: change to defonce
 ;;
-(defonce game
+(def game
   (atom (game-setup)))
-
-(defn next-game! [game]
-  (let [{:keys [level round]} game]
-    [level round]))
-
-(def level2-heaps [
-                   [1 0]
-                   [1 1]
-                   [2 1]
-                   [2 2]
-                   [4 2]
-                   [3 8]
-                   [4 5]
-                   [12 1]
-                   ])
-
-(def level3-heaps [
-                   [1]
-                   [1 1 1]
-                   [1 1 1 1]
-                   [1 1 1 1 1 1 1]
-                   [1 1 1 1 1 1 1 1 1 1]
-                   ])
-
-(defn lookup-heaps [heap-table round] 
-  (if (contains? heap-table round) (nth heap-table round) nil))
-
-(defn make-heaps [level round]
-  "make heaps for given round and level. Return round level and heaps "
-  (loop [level level
-         round round]
-
-    (let [result (cond 
-                  (= 1 level) (rand-heaps 1 1 1 10)
-                  (= 2 level) (lookup-heaps level2-heaps round)
-                  (= 3 level) (lookup-heaps level3-heaps round)
-                  (= 4 level) (rand-heaps 3 3 1 2)
-                  (= 5 level) (rand-heaps 3 3 1 4)
-                  (= 6 level) (rand-heaps 3 3 1 8)
-                  (= 7 level) (rand-heaps 3 3 1 16)
-                  :else (rand-heaps 1 6 1 12))]
-      
-      (if (not= nil result)
-        {:heaps result :level level :round round}
-        (recur (inc level) 0)))))
-
-;;
-;; layout
-;;
-
 
 ;;
 ;; game strategy
@@ -150,11 +87,6 @@
   "start a new game"
   (swap! game game-setup))
 
-(defn change-level! [event]
-  (.debug js/console (-> event .-target .-value))
-  (let [new-level (-> event .-target .-value int)]
-    (swap! game #(assoc % :level new-level))))
-
 (defn from-k-take-n! [k n]
   (let [heaps (:heaps @game)
         new-heaps (heaps-at-k-take-n heaps k n)]
@@ -195,16 +127,6 @@
   "highlight the next best move"
   (let [[k n] (get-best-move (:heaps @game))]
     (prime! k (at-k-leave-n! k n))))
-
-(defn pair! []
-  "pair items together somehow"
-  (println "pair")
-  (let [heaps (:heaps @game)
-        p (:pairing @game)
-        pairing (if (>= p (max-pairing heaps)) 0 (inc p))]
-    (swap! game #(assoc % :pairing pairing))
-    )
-)
 
 ;;
 ;; event handling
@@ -255,23 +177,9 @@
   )
 
 (r/defc render-toolbar < r/reactive []
-  (let [game-state (r/react game)
-        level (:level game-state)
-        pairing (:pairing game-state)
-        pair? (< pairing (max-pairing (:heaps game-state)))] 
-    [:div {:class "controlls"}
-     [:button {:on-click start!} "New game"]
-     [:button {:on-click hint!} "Hint"]
-     [:button {:on-click pair!} (if pair? 
-                                  (if (= 0 pairing) "Pair" "Pair again") 
-                                  "Separate")]
-     [:select {:on-change change-level! :value level}
-      [:option {:value 1} "Level 1"]
-      [:option {:value 2} "Level 2"]
-      [:option {:value 3} "Level 3"]
-      [:option {:value 4} "Level 4"]
-      [:option {:value 5} "Level 5"]
-      ]])
+  [:div {:class "controlls"}
+   [:button {on-click start!} "New game"]
+   [:button {on-click hint!} "Hint"]]
 )
 
 (r/defc render-game < r/reactive []
