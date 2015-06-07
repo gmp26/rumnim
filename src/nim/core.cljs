@@ -6,7 +6,7 @@
 
 (def tick-in-ms 250)
 
-(def root2 (.sqrt js/Math 2))
+(def root2 (Math/sqrt 2))
 
 (def xscale 0.5)
 
@@ -36,15 +36,16 @@
       (assoc heaps k new-heap))
     heaps))
 
-(def level-spec [2 6 1 12])
-
-(def start-level 1)
+(def level-spec 
+  [2 6 1 12])
 
 (defn game-setup []
   "setup or restart the game"
   (let [heaps (apply rand-heaps level-spec)]
     {:primed nil
-     :heaps heaps}))
+     :heaps heaps
+     :level 1
+     :round 1}))
 
 ;;
 ;; define game as the single? game state atom
@@ -54,9 +55,54 @@
 (defonce game
   (atom (game-setup)))
 
+(defn next-game! [game]
+  (let [{:keys [level round]} game]
+    [level round]))
+
+(def level2-heaps [
+                   [1 0]
+                   [1 1]
+                   [2 1]
+                   [2 2]
+                   [4 2]
+                   [3 8]
+                   [4 5]
+                   [12 1]
+                   ])
+
+(def level3-heaps [
+                   [1]
+                   [1 1 1]
+                   [1 1 1 1]
+                   [1 1 1 1 1 1 1]
+                   [1 1 1 1 1 1 1 1 1 1]
+                   ])
+
+(defn lookup-heaps [heap-table round] 
+  (if (contains? heap-table round) (nth heap-table round) nil))
+
+(defn make-heaps [level round]
+  "make heaps for given round and level. Return round level and heaps "
+  (loop [level level
+         round round]
+
+    (let [result (cond 
+                  (= 1 level) (rand-heaps 1 1 1 10)
+                  (= 2 level) (lookup-heaps level2-heaps round)
+                  (= 3 level) (lookup-heaps level3-heaps round)
+                  (= 4 level) (rand-heaps 3 3 1 2)
+                  (= 5 level) (rand-heaps 3 3 1 4)
+                  (= 6 level) (rand-heaps 3 3 1 8)
+                  (= 7 level) (rand-heaps 3 3 1 16)
+                  :else (rand-heaps 1 6 1 12))]
+      
+      (if (not= nil result)
+        {:heaps result :level level :round round}
+        (recur (inc level) 0)))))
 ;;
 ;; game strategy
 ;;
+
 (defn nim-sum [heaps]
   "Calculate the nim-sum of all heaps by xoring them all together"
   (reduce bit-xor heaps))
@@ -98,7 +144,7 @@
 
 (defn change-level! [event]
   (.debug js/console (-> event .-target .-value))
-  (let [new-level (-> event .-target .-value)]
+  (let [new-level (-> event .-target .-value int)]
     (swap! game #(assoc % :level new-level))))
 
 (defn from-k-take-n! [k n]
@@ -211,15 +257,16 @@
                 (kth-heap-offset heaps k)
                 ))
   [:g {:transform (str "scale(" xscale " " yscale ")")}
-   [:circle {:cx (* root2 (kth-heap-offset heaps k))
-             :cy (* root2 (+ 0.5 (- n 1))) ;; dangling
-             :r 0.5
-             :id (str "[" k " " n "]")
-             :fill (if (is-highlighted? k n) "#f00" "rgba(100,200,100,0.7)")
-             :stroke "#000"
-             :stroke-width "0.1" 
-             :on-click (fn [e] (item-clicked e))
-             }]])
+   [:ellipse {:cx (* root2 (kth-heap-offset heaps k))
+              :cy (* root2 (+ 0.5 (- n 1))) ;; dangling
+              :rx 0.7
+              :ry 0.5
+              :id (str "[" k " " n "]")
+              :fill (if (is-highlighted? k n) "#f00" "rgba(100,200,100,0.7)")
+              :stroke "#000"
+              :stroke-width "0.1" 
+              :on-click (fn [e] (item-clicked e))
+              }]])
 
 (r/defc render-heap < r/reactive [heaps k n]
   [:g
@@ -238,16 +285,17 @@
     ))
 
 (r/defc render-toolbar < r/reactive []
-  [:div {:class "controlls"}
-   [:button {:on-click start!} "New game"]
-   [:button {:on-click hint!} "Hint"]
-   [:select {:on-change change-level! :defaultValue start-level}
-    [:option {:value 1} "Level 1"]
-    [:option {:value 2} "Level 2"]
-    [:option {:value 3} "Level 3"]
-    [:option {:value 4} "Level 4"]
-    [:option {:value 5} "Level 5"]
-    ]]
+  (let [level (:level (r/react game))] 
+    [:div {:class "controlls"}
+     [:button {:on-click start!} "New game"]
+     [:button {:on-click hint!} "Hint"]
+     [:select {:on-change change-level! :value level}
+      [:option {:value 1} "Level 1"]
+      [:option {:value 2} "Level 2"]
+      [:option {:value 3} "Level 3"]
+      [:option {:value 4} "Level 4"]
+      [:option {:value 5} "Level 5"]
+      ]])
 )
 
 (r/defc render-game < r/reactive []
