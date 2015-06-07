@@ -37,7 +37,7 @@
     heaps))
 
 (defn max-pairing [heaps]
-  (msb (apply max heaps))
+  (- (Math.pow 2 (msb (apply max heaps))) 1)
   )
 
 (def level-spec 
@@ -108,7 +108,8 @@
 ;;
 ;; layout
 ;;
-
+(defn pairing-offset [n pairing]
+  ())
 
 ;;
 ;; game strategy
@@ -196,12 +197,15 @@
   (let [[k n] (get-best-move (:heaps @game))]
     (prime! k (at-k-leave-n! k n))))
 
+(defn next-pairing [p] 
+  (inc (#(bit-shift-left % 1) p)))
+
 (defn pair! []
   "pair items together somehow"
   (println "pair")
   (let [heaps (:heaps @game)
         p (:pairing @game)
-        pairing (if (>= p (max-pairing heaps)) 0 (inc p))]
+        pairing (if (>= p (max-pairing heaps)) 0 (next-pairing p))]
     (swap! game #(assoc % :pairing pairing))
     )
 )
