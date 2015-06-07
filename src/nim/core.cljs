@@ -8,6 +8,11 @@
 
 (def tick-in-ms 250)
 
+;; debug
+(defn deb [x]
+  (do (println x) x))
+
+
 ;; utilities
 
 ;; don't assume es6 yet!
@@ -37,7 +42,7 @@
     heaps))
 
 (defn max-pairing [heaps]
-  (- (Math.pow 2 (msb (apply max heaps))) 1)
+  (msb (apply max heaps))
   )
 
 (def level-spec 
@@ -108,8 +113,27 @@
 ;;
 ;; layout
 ;;
-(defn pairing-offset [n pairing]
-  ())
+(def eps 0.5)
+(def radius 0.5)
+
+(defn pairing-offset [pairing n]
+  "tricky calculation to group in 1s, 2s, 4s, ... by current pairing factor"
+  (let [
+        n' (- n 1)
+        f (/ (Math.pow 2 (+ pairing 0)) 4) 
+        f' (bit-shift-right n' pairing)
+        f'' ()
+        focus (+ f (* f' (Math.pow 2 (- pairing 1))))
+        off (+ focus (* eps (- n' focus)))
+        ]
+    (do
+      (println "p" pairing "n'" n' "f" f "f'" f' "focus" focus "off" off)
+      #_(if (= pairing 0)
+        n'
+        off)
+      off
+      ))
+)
 
 ;;
 ;; game strategy
@@ -198,7 +222,7 @@
     (prime! k (at-k-leave-n! k n))))
 
 (defn next-pairing [p] 
-  (inc (#(bit-shift-left % 1) p)))
+  (inc p))
 
 (defn pair! []
   "pair items together somehow"
@@ -234,14 +258,13 @@
 (r/defc render-item < r/reactive [k n]
   "render item n in heap k"
   [:circle {:cx (+ 1 (* 2 k))
-            :cy (+ 0.5 (- n 1))                 ;; dangling
+            :cy (pairing-offset (:pairing @game) n) ;; dangling
 ;            :cy (- (- grid-size (- n 1)) 0.5)  ;; standing
-            :r 0.5
+            :r radius
             :id (str "[" k " " n "]")
-            :fill (if (is-highlighted? k n) "#f00" "rgba(100,200,100,0.7)")
-            :stroke "#000"
-            :stroke-width "0.1" 
+            :fill (if (is-highlighted? k n) "#f00" "rgba(100,200,100,1)")
             :on-click (fn [e] (item-clicked e))
+            :class "blobs"
             }])
 
 (r/defc render-heap < r/reactive [k n]
