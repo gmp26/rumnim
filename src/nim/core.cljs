@@ -1,6 +1,9 @@
 (ns ^:figwheel-always nim.core
     (:require [rum :as r]
-              [cljs.reader :as reader]))
+              [cljs.reader :as reader]
+              [clojure.set :refer [difference]]))
+
+
 
 (enable-console-print!)
 
@@ -45,6 +48,17 @@
   (msb (apply max heaps))
   )
 
+(defn pair-groups [heaps]
+  (take 4 (iterate #(partition-all 2 %) heaps))
+)
+
+(defn diff-pair-groups [heaps pair1 pair2]
+  (let [pairs (pair-groups heaps)
+        p1 (deb (nth pairs pair1 []))
+        p2 (deb (for [p (nth pairs pair2)] p))]
+    (difference (set p1) (set p2))))
+
+
 (def level-spec 
   [2 6 1 12])
 
@@ -55,6 +69,7 @@
      :heaps heaps
      :level 1
      :round 1
+     :grouping heaps
      :pairing 0}))
 
 ;;
