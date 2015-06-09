@@ -49,7 +49,7 @@
   )
 
 (defn pair-groups [heaps]
-  (take 4 (iterate #(partition-all 2 %) heaps))
+  (take-while (iterate #(partition-all 2 %) heaps))
 )
 
 (defn diff-pair-groups [heaps pair1 pair2]
@@ -293,7 +293,7 @@
 ))
 
 (r/defc render-heaps < r/reactive []
-  [:g (map draw-heap (iterate inc 0) (:heaps (r/react game)))]
+  [:g (map-indexed draw-heap (:heaps (r/react game)))]
   )
 
 (r/defc render-toolbar < r/reactive []
@@ -316,20 +316,33 @@
       ]])
 )
 
+(r/defc render-blob < r/reactive [x y]
+  [:div {:class "blobs"  :style {:top x :left y} }])
+
+(r/defc render-blobs < r/reactive []
+  [:div {:class "blobc"}
+   (render-blob 30 30)
+   (render-blob 80 80)])
+
+
+(r/defc render-svg-board < r/reactive [gsize]
+  [:svg {:class "playfield"
+         :width gsize :height gsize
+         :viewBox (str "0 0 " gsize " " gsize)}
+   (render-heaps)]
+)
+
 (r/defc render-game < r/reactive []
   [:div
    [:h1 "Play NIM" ]
    (debug-game)
    (render-toolbar)
    [:div
-    [:svg {:class "playfield"
-           :width grid-size :height grid-size
-           :viewBox (str "0 0 " grid-size " " grid-size)}
-     (render-heaps)
-     ]
-    (render-toolbar)
+    #_(render-blobs)
+    (render-svg-board grid-size)
     ]
-   ])
+   (render-toolbar)
+ ])
 
 (r/mount (render-game)
          (.getElementById js/document "game"))
