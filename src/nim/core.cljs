@@ -131,6 +131,25 @@
 (def eps 0.5)
 (def radius 0.5)
 
+(defn grouper [n]
+ "needed for groups calculation. (grouper 9) => (9 4 2 1)"
+ (take-while #(not= 0 %) (iterate #(bit-shift-right % 1) n)))
+
+(defn groups [pairing n]
+  "the power 2 groups to display for each pairing"
+  (keep-indexed #(if (<= %1 pairing) 
+                   (if (< %1 pairing) 
+                     (mod  %2 2)
+                     %2)) (grouper n)))
+
+(def i-gap 0.7)
+(def o-gap 0.9)
+
+#_(defn item-offsets [pairing n]
+  (let [gs (groups pairing n)]
+    (for g gs
+         :let [group (map (constantly i-gap) (range g))])))
+
 (defn pairing-offset [pairing n]
   "tricky calculation to group in 1s, 2s, 4s, ... by current pairing factor"
   (let [
