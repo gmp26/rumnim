@@ -134,7 +134,7 @@
 (defn pairing-offset [pairing n]
   "tricky calculation to group in 1s, 2s, 4s, ... by current pairing factor"
   (let [
-        n' (- n 1)
+        n' n
         f (/ (Math.pow 2 (+ pairing 0)) 4) 
         f' (bit-shift-right n' pairing)
         f'' ()
@@ -277,7 +277,7 @@
 ;            :cy (- (- grid-size (- n 1)) 0.5)  ;; standing
             :r radius
             :id (str "[" k " " n "]")
-            :fill (if (is-highlighted? k n) "#f00" "rgba(100,200,100,1)")
+            :fill (if (is-highlighted? k n) "rgba(255,80,100,0.7)" "rgba(100,150,255,0.6)")
             :on-click (fn [e] (item-clicked e))
             :class "blobs"
             }])
@@ -291,6 +291,14 @@
   (if (> n 0)
     (render-heap k n)
 ))
+
+(defn groups-and-offsets [pairing n]
+  (let [items (range 0 n)]
+    (cond 
+     (= pairing 0) (map (constantly 1) items)
+     (= pairing 1) (map #(count %) (reverse (partition-all 2 items)))
+     (= pairing 2) (map #(count %) (reverse (partition-all 4 items)))))
+  )
 
 (r/defc render-heaps < r/reactive []
   [:g (map-indexed draw-heap (:heaps (r/react game)))]
@@ -315,15 +323,6 @@
       [:option {:value 5} "Level 5"]
       ]])
 )
-
-(r/defc render-blob < r/reactive [x y]
-  [:div {:class "blobs"  :style {:top x :left y} }])
-
-(r/defc render-blobs < r/reactive []
-  [:div {:class "blobc"}
-   (render-blob 30 30)
-   (render-blob 80 80)])
-
 
 (r/defc render-svg-board < r/reactive [gsize]
   [:svg {:class "playfield"
