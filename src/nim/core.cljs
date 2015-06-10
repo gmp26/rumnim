@@ -15,8 +15,9 @@
 (defn deb [x]
   (do (println x) x))
 
-
+;;
 ;; utilities
+;;
 
 ;; don't assume es6 yet!
 (def log2 #(/ (Math.log %) (Math.log 2)))
@@ -44,20 +45,10 @@
       (assoc heaps k new-heap))
     heaps))
 
+; sets the limit of pairing wrap around
 (defn max-pairing [heaps]
   (msb (apply max heaps))
   )
-
-(defn pair-groups [heaps]
-  (take-while (iterate #(partition-all 2 %) heaps))
-)
-
-(defn diff-pair-groups [heaps pair1 pair2]
-  (let [pairs (pair-groups heaps)
-        p1 (deb (nth pairs pair1 []))
-        p2 (deb (for [p (nth pairs pair2)] p))]
-    (difference (set p1) (set p2))))
-
 
 (def level-spec 
   [2 6 1 12])
@@ -135,39 +126,53 @@
  "needed for groups calculation. (grouper 9) => (9 4 2 1)"
  (take-while #(not= 0 %) (iterate #(bit-shift-right % 1) n)))
 
+(defn wrap-groups [aseq]
+  (conj () aseq))
+
 (defn groups [pairing n]
   "the power 2 groups to display for each pairing"
-  (keep-indexed #(if (<= %1 pairing) 
-                   (if (< %1 pairing) 
-                     (mod  %2 2)
-                     %2)) (grouper n)))
+  (map wrap-groups (keep-indexed #(if (<= %1 pairing) 
+                                (if (< %1 pairing) 
+                                  (mod  %2 2)
+                                  %2)) (grouper n))))
 
-(def i-gap 0.7)
-(def o-gap 0.9)
+(def i-gap 0.75)
+(def o-gap 1.2)
 
-#_(defn item-offsets [pairing n]
-  (let [gs (groups pairing n)]
-    (for g gs
-         :let [group (map (constantly i-gap) (range g))])))
+(defn expanded-groups [pairing n]
+  (let [egs (map-indexed #(if (seq? %2) 
+                            (range 0 (* (Math.pow 2 %1) (first %2)))
+                            %2) 
+                         (groups pairing n))]
+    (map #(partition-all (Math.pow 2 pairing) %) egs)))
 
-(defn pairing-offset [pairing n]
-  "tricky calculation to group in 1s, 2s, 4s, ... by current pairing factor"
-  (let [
-        n' n
-        f (/ (Math.pow 2 (+ pairing 0)) 4) 
-        f' (bit-shift-right n' pairing)
-        f'' ()
-        focus (+ f (* f' (Math.pow 2 (- pairing 1))))
-        off (+ focus (* eps (- n' focus)))
-        ]
-    (do
-      (println "p" pairing "n'" n' "f" f "f'" f' "focus" focus "off" off)
-      #_(if (= pairing 0)
-        n'
-        off)
-      off
-      ))
+(defn clumps [pairing n]
+  (remove empty? (expanded-groups pairing n)))
+
+(defn clump [aclump] (map #(* i-gap %) aclump))
+
+(defn clump-offsets [pairing n]
+  (map clump (clumps pairing n)))
+
+(defn clump-cum-counts [pairing n]
+  (reductions + 0 (map count (clumps pairing n))))
+
+(defn clump-lengths [pairing n]
+  (map #(+ i-gap o-gap (last %)) (clump-offsets pairing n)))
+
+(defn clump-starts [pairing n]
+  (butlast (reductions + 0 (clump-lengths pairing n)))
 )
+
+(defn item-offsets [pairing n]
+  (let [addmap (fn [start offsets] (map #(+ start %) offsets))]
+    (flatten 
+     (map addmap (clump-starts pairing n) (clump-offsets pairing n))))
+)
+
+(defn item-offset [pairing k n]
+  (nth (item-offsets pairing k) n))
+
 
 ;;
 ;; game strategy
@@ -260,7 +265,6 @@
 
 (defn pair! []
   "pair items together somehow"
-  (println "pair")
   (let [heaps (:heaps @game)
         p (:pairing @game)
         pairing (if (>= p (max-pairing heaps)) 0 (next-pairing p))]
@@ -279,7 +283,6 @@
   "read [col row] form from event.target.id string"
   (let [[k n] (reader/read-string (-> event .-target .-id))]
     (do
-      (println "prime-or-delete " k " " n)
       (prime-or-delete! k n)
      )))
 
@@ -290,20 +293,22 @@
   [:div {:class "debug"} "Game state: " (str (r/react game))])
 
 (r/defc render-item < r/reactive [k n]
-  "render item n in heap k"
-  [:circle {:cx (+ 1 (* 2 k))
-            :cy (pairing-offset (:pairing @game) n) ;; dangling
-;            :cy (- (- grid-size (- n 1)) 0.5)  ;; standing
-            :r radius
-            :id (str "[" k " " n "]")
-            :fill (if (is-highlighted? k n) "rgba(255,80,100,0.7)" "rgba(100,150,255,0.6)")
-            :on-click (fn [e] (item-clicked e))
-            :class "blobs"
-            }])
+  "render item n in kth heap"
+  (let [g @game
+        pairing (:pairing g)
+        heaps (:heaps g)]
+    [:circle {:cx (+ 1 (* 2 k))
+              :cy (item-offset pairing (nth heaps k) n)
+              :r radius
+              :id (str "[" k " " n "]")
+              :fill (if (is-highlighted? k n) "rgba(255,80,100,0.7)" "rgba(100,150,255,0.6)")
+              :on-click (fn [e] (item-clicked e))
+              :class "blobs"
+              }]))
 
 (r/defc render-heap < r/reactive [k n]
   [:g
-   (map #(render-item k %) (range 1 (inc n)))]
+   (map #(render-item k %) (range n))]
   )
 
 (defn draw-heap [k n]
@@ -311,13 +316,6 @@
     (render-heap k n)
 ))
 
-(defn groups-and-offsets [pairing n]
-  (let [items (range 0 n)]
-    (cond 
-     (= pairing 0) (map (constantly 1) items)
-     (= pairing 1) (map #(count %) (reverse (partition-all 2 items)))
-     (= pairing 2) (map #(count %) (reverse (partition-all 4 items)))))
-  )
 
 (r/defc render-heaps < r/reactive []
   [:g (map-indexed draw-heap (:heaps (r/react game)))]
