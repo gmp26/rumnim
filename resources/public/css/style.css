@@ -35,6 +35,9 @@ svg {
 
 .blobc {
     -webkit-filter: url("#goo");
+    -moz-filter: url("#goo");
+    -ms-filter: url("#goo");
+    -filter: url("#goo");
     position: relative;
     width: 100%;
     padding-top: 100%;

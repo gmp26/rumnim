@@ -136,8 +136,12 @@
                                   (mod  %2 2)
                                   %2)) (grouper n))))
 
-(def i-gap 0.75)
-(def o-gap 1.2)
+(def i-gap 0.8)
+(def o-gap 1.15)
+
+(defn unwrap [alist] (apply concat alist))
+
+#_(map (constantly 2) (range (bit-shift-right n 1)))
 
 (defn expanded-groups [pairing n]
   (let [egs (map-indexed #(if (seq? %2) 
@@ -147,9 +151,9 @@
     (map #(partition-all (Math.pow 2 pairing) %) egs)))
 
 (defn clumps [pairing n]
-  (remove empty? (expanded-groups pairing n)))
+  (unwrap (remove empty? (expanded-groups pairing n))))
 
-(defn clump [aclump] (map #(* i-gap %) aclump))
+(defn clump [aclump] (map-indexed (fn [x _] (* i-gap x)) aclump))
 
 (defn clump-offsets [pairing n]
   (map clump (clumps pairing n)))
@@ -158,7 +162,7 @@
   (reductions + 0 (map count (clumps pairing n))))
 
 (defn clump-lengths [pairing n]
-  (map #(+ i-gap o-gap (last %)) (clump-offsets pairing n)))
+  (map #(+  o-gap (last %)) (clump-offsets pairing n)))
 
 (defn clump-starts [pairing n]
   (butlast (reductions + 0 (clump-lengths pairing n)))
@@ -301,7 +305,7 @@
               :cy (item-offset pairing (nth heaps k) n)
               :r radius
               :id (str "[" k " " n "]")
-              :fill (if (is-highlighted? k n) "rgba(255,80,100,0.7)" "rgba(100,150,255,0.6)")
+              :fill (if (is-highlighted? k n) "rgba(255,80,100,1)" "rgba(100,150,255,1)")
               :on-click (fn [e] (item-clicked e))
               :class "blobs"
               }]))
