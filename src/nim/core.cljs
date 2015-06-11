@@ -169,7 +169,7 @@
 )
 
 (defn item-offsets [pairing n]
-  (let [addmap (fn [start offsets] (map #(+ start %) offsets))]
+  (let [addmap (fn [start offsets] (map #(+ 0.5 start %) offsets))]
     (flatten 
      (map addmap (clump-starts pairing n) (clump-offsets pairing n))))
 )
