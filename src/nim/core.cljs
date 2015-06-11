@@ -151,26 +151,31 @@
     (map #(partition-all (Math.pow 2 pairing) %) egs)))
 
 (defn clumps [pairing n]
-  (unwrap (remove empty? (expanded-groups pairing n))))
+  (unwrap (expanded-groups pairing n)))
 
 (defn clump [aclump] (map-indexed (fn [x _] (* i-gap x)) aclump))
 
 (defn clump-offsets [pairing n]
   (map clump (clumps pairing n)))
 
-(defn clump-cum-counts [pairing n]
-  (reductions + 0 (map count (clumps pairing n))))
+(defn clump-counts [pairing n]
+  (map count (clumps pairing n)))
+
+(defn clump-count-offsets [pairing n]
+  (map #(- % 1) (clump-counts pairing n)))
 
 (defn clump-lengths [pairing n]
   (map #(+  o-gap (last %)) (clump-offsets pairing n)))
 
 (defn clump-starts [pairing n]
-  (butlast (reductions + 0 (clump-lengths pairing n)))
+  (map +
+       (clump-count-offsets pairing n)
+       (butlast (reductions + 0 (clump-lengths pairing n))))
 )
 
 (defn item-offsets [pairing n]
-  (let [addmap (fn [start offsets] (map #(+ start %) offsets))]
-    (flatten 
+  (let [addmap (fn [start offsets] (map #(+ 0.5 start %) offsets))]
+    (flatten
      (map addmap (clump-starts pairing n) (clump-offsets pairing n))))
 )
 
