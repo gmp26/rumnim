@@ -158,13 +158,6 @@
 (defn clump-offsets [pairing n]
   (map clump (clumps pairing n)))
 
-(defn group-offsets [pairing n]
-  (map-indexed 
-   (fn [gx g] 
-     (let [gstart (- (Math.pow 2 gx) 1)
-           goff (map (fn [m] (map  #(+ gstart %) m)) g)]
-       goff)) (expanded-groups pairing n)))
-
 (defn clump-counts [pairing n]
   (map count (clumps pairing n)))
 
@@ -182,7 +175,11 @@
 
 (defn item-offsets [pairing n]
   (let [addmap (fn [start offsets] (map #(+ 0.5 start %) offsets))]
+<<<<<<< HEAD
+    (flatten 
+=======
     (flatten
+>>>>>>> 7030456a0dbdbd585bd3334ea00a9aba69dccabd
      (map addmap (clump-starts pairing n) (clump-offsets pairing n))))
 )
 
