@@ -12,8 +12,8 @@
 (def tick-in-ms 250)
 
 ;; debug
-(defn deb [x]
-  (do (println x) x))
+(defn deb [x & msg]
+  (do (if msg (println msg x) (println x)) x))
 
 ;;
 ;; utilities
@@ -141,14 +141,22 @@
 
 (defn unwrap [alist] (apply concat alist))
 
-#_(map (constantly 2) (range (bit-shift-right n 1)))
-
-(defn expanded-groups [pairing n]
+#_(defn expanded-groups [pairing n]
   (let [egs (map-indexed #(if (seq? %2) 
                             (range 0 (* (Math.pow 2 %1) (first %2)))
-                            %2) 
+                            (deb "nil" %2)) 
                          (groups pairing n))]
     (map #(partition-all (Math.pow 2 pairing) %) egs)))
+
+(defn expanded-groups [pairing n]
+  (let [egs (map-indexed 
+             #(range 0 (* (Math.pow 2 %1) (first %2))) 
+             (groups pairing n))]
+
+    (map #(partition-all (Math.pow 2 pairing) %) egs)))
+
+(defn inner-group-starts [pairing n]
+  (map some-inner-map (expanded-groups pairing n)))
 
 (defn clumps [pairing n]
   (unwrap (expanded-groups pairing n)))
@@ -162,7 +170,8 @@
   (map-indexed 
    (fn [gx g] 
      (let [gstart (- (Math.pow 2 gx) 1)
-           goff (map (fn [m] (map  #(+ gstart %) m)) g)]
+           goff (map (fn [m] (map  #(+ gstart %) m)) 
+g)]
        goff)) (expanded-groups pairing n)))
 
 (defn clump-counts [pairing n]
