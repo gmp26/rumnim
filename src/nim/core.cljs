@@ -158,14 +158,6 @@
 (defn inner-group-starts [pairing n]
   (map some-inner-map (expanded-groups pairing n)))
 
-(defn clumps [pairing n]
-  (unwrap (expanded-groups pairing n)))
-
-(defn clump [aclump] (map-indexed (fn [x _] (* i-gap x)) aclump))
-
-(defn clump-offsets [pairing n]
-  (map clump (clumps pairing n)))
-
 (defn group-offsets [pairing n]
   (map-indexed 
    (fn [gx g] 
@@ -173,6 +165,14 @@
            goff (map (fn [m] (map  #(+ gstart %) m)) 
 g)]
        goff)) (expanded-groups pairing n)))
+
+(defn clumps [pairing n]
+  (unwrap (expanded-groups pairing n)))
+
+(defn clump [aclump] (map-indexed (fn [x _] (* i-gap x)) aclump))
+
+(defn clump-offsets [pairing n]
+  (map clump (clumps pairing n)))
 
 (defn clump-counts [pairing n]
   (map count (clumps pairing n)))
