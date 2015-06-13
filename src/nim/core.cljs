@@ -51,7 +51,7 @@
   )
 
 (def level-spec 
-  [2 6 1 12])
+  [2 6 1 15])
 
 (defn game-setup []
   "setup or restart the game"
@@ -119,7 +119,6 @@
 ;;
 ;; layout
 ;;
-(def eps 0.5)
 (def radius 0.5)
 
 (defn grouper [n]
@@ -139,17 +138,10 @@
 (def i-gap 0.8)
 (def o-gap 1.15)
 
-(def i-gp 0.2)
-(def o-gp 1)
+(def i-gp 0.1)
+(def o-gp 1.2)
 
 (defn unwrap [alist] (apply concat alist))
-
-#_(defn expanded-groups [pairing n]
-  (let [egs (map-indexed #(if (seq? %2) 
-                            (range 0 (* (Math.pow 2 %1) (first %2)))
-                            (deb "nil" %2)) 
-                         (groups pairing n))]
-    (map #(partition-all (Math.pow 2 pairing) %) egs)))
 
 (defn expanded-groups [pairing n]
   (let [egs (map-indexed 
@@ -158,49 +150,15 @@
 
     (map #(partition-all (Math.pow 2 pairing) %) egs)))
 
-(defn clump [aclump] (map-indexed (fn [x _] (* i-gap x)) aclump))
-
-#_(defn group-s [pairing n]
-  (let [grup [agroup] ])
-  (map clump (expanded-groups pairing n)))
-
-(defn clumps [pairing n]
-  (unwrap (expanded-groups pairing n)))
-
-(defn clump-offsets [pairing n]
-  (map clump (clumps pairing n)))
-
 (defn group-offsets [pairing n]
   (map-indexed 
    (fn [gx g] 
      (let [gstart (- (Math.pow 2 gx) 2)
-           goff #(* o-gp %)
            ioff #(* i-gp %)
-           glen (inc (Math.pow 2 (- gx 1)))
-           goff (map-indexed (fn [g,m] (map-indexed  #(+ (ioff %1) (+ g glen (* o-gp gstart)) %2) m)) 
+           glen (inc (Math.pow 1.33 gx))
+           goff (map-indexed (fn [g,m] (map-indexed  #(+ (ioff %1) (+ (* 0.7 (+ g -0.5)) glen (* o-gp gstart)) %2) m)) 
 g)]
        goff)) (expanded-groups pairing n)))
-
-(defn clump-counts [pairing n]
-  (map count (clumps pairing n)))
-
-(defn clump-count-offsets [pairing n]
-  (map #(- % 1) (clump-counts pairing n)))
-
-(defn clump-lengths [pairing n]
-  (map #(+  o-gap (last %)) (clump-offsets pairing n)))
-
-(defn clump-starts [pairing n]
-  (map +
-       (clump-count-offsets pairing n)
-       (butlast (reductions + 0 (clump-lengths pairing n))))
-)
-
-#_(defn item-offsets [pairing n]
-  (let [addmap (fn [start offsets] (map #(+ 0.5 start %) offsets))]
-    (flatten
-     (map addmap (clump-starts pairing n) (clump-offsets pairing n))))
-)
 
 (defn item-offsets [pairing n]
   (flatten (group-offsets pairing n)))
@@ -280,7 +238,7 @@ g)]
   (swap! game #(assoc % :primed [k n])))
 
 (defn at-k-leave-n! [k n]
-  (- (nth (:heaps @game) k) (- n 1)))
+  (- (nth (:heaps @game) k) (- n 0)))
 
 (defn prime-or-delete! [k n]
   "item k n is to be primed for deletion, or deleted if already primed"
@@ -311,7 +269,7 @@ g)]
 ;; event handling
 ;;
 
-(defn you-clicked-on [[k n]]
+(defn you-clicked-on [k n]
   (println (str "you clicked on " k " " n)))
 
 (defn item-clicked [event]
