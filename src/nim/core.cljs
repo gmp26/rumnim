@@ -139,6 +139,9 @@
 (def i-gap 0.8)
 (def o-gap 1.15)
 
+(def i-gp 0.2)
+(def o-gp 1)
+
 (defn unwrap [alist] (apply concat alist))
 
 #_(defn expanded-groups [pairing n]
@@ -155,13 +158,14 @@
 
     (map #(partition-all (Math.pow 2 pairing) %) egs)))
 
-(defn inner-group-starts [pairing n]
-  (map some-inner-map (expanded-groups pairing n)))
+(defn clump [aclump] (map-indexed (fn [x _] (* i-gap x)) aclump))
+
+#_(defn group-s [pairing n]
+  (let [grup [agroup] ])
+  (map clump (expanded-groups pairing n)))
 
 (defn clumps [pairing n]
   (unwrap (expanded-groups pairing n)))
-
-(defn clump [aclump] (map-indexed (fn [x _] (* i-gap x)) aclump))
 
 (defn clump-offsets [pairing n]
   (map clump (clumps pairing n)))
@@ -169,8 +173,11 @@
 (defn group-offsets [pairing n]
   (map-indexed 
    (fn [gx g] 
-     (let [gstart (- (Math.pow 2 gx) 1)
-           goff (map (fn [m] (map  #(+ gstart %) m)) 
+     (let [gstart (- (Math.pow 2 gx) 2)
+           goff #(* o-gp %)
+           ioff #(* i-gp %)
+           glen (inc (Math.pow 2 (- gx 1)))
+           goff (map-indexed (fn [g,m] (map-indexed  #(+ (ioff %1) (+ g glen (* o-gp gstart)) %2) m)) 
 g)]
        goff)) (expanded-groups pairing n)))
 
@@ -189,11 +196,14 @@ g)]
        (butlast (reductions + 0 (clump-lengths pairing n))))
 )
 
-(defn item-offsets [pairing n]
+#_(defn item-offsets [pairing n]
   (let [addmap (fn [start offsets] (map #(+ 0.5 start %) offsets))]
     (flatten
      (map addmap (clump-starts pairing n) (clump-offsets pairing n))))
 )
+
+(defn item-offsets [pairing n]
+  (flatten (group-offsets pairing n)))
 
 (defn item-offset [pairing k n]
   (nth (item-offsets pairing k) n))
@@ -367,10 +377,11 @@ g)]
 )
 
 (r/defc render-svg-board < r/reactive [gsize]
-  [:svg {:class "playfield"
-         :width gsize :height gsize
-         :viewBox (str "0 0 " gsize " " gsize)}
-   (render-heaps)]
+  (let [gsz (* 2 gsize)]
+    [:svg {:class "playfield"
+           :width gsize :height gsz
+           :viewBox (str "0 0 " gsize " " gsz)}
+     (render-heaps)])
 )
 
 (r/defc render-game < r/reactive []
