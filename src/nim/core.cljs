@@ -106,7 +106,7 @@
 
 (def messages
   {:none {:visible false}
-   :instructions {:visible true
+   :instructions {:visible false
                   :title "Instructions"
                   :msgs [(str "Take turns to remove as many drips as you like from one drip trail."
                                " Click once to choose, and once again to confirm."
@@ -449,7 +449,7 @@ the computer will go first.")
 
 (r/defc render-game < r/reactive []
   [:div
-   [:h1 "Nim Calculator" ]
+   [:h1 "Drips" ]
   (debug-game)
    (render-toolbar)
    [:div
