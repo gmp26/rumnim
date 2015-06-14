@@ -11,6 +11,11 @@
 
 (def tick-in-ms 250)
 
+(def unit (Math.floor (/ 300 12)))
+
+(defn px [x]
+  (str (* x unit) "px"))
+
 ;; debug
 (defn deb [x & msg]
   (do (if msg (println msg x) (println x)) x))
@@ -135,11 +140,8 @@
                                   (mod  %2 2)
                                   %2)) (grouper n))))
 
-(def i-gap 0.8)
-(def o-gap 1.15)
-
 (def i-gp 0.1)
-(def o-gp 1.2)
+(def o-gp 1)
 
 (defn unwrap [alist] (apply concat alist))
 
@@ -155,9 +157,19 @@
    (fn [gx g] 
      (let [gstart (- (Math.pow 2 gx) 2)
            ioff #(* i-gp %)
-           glen (inc (Math.pow 1.33 gx))
-           goff (map-indexed (fn [g,m] (map-indexed  #(+ (ioff %1) (+ (* 0.7 (+ g -0.5)) glen (* o-gp gstart)) %2) m)) 
-g)]
+           glen (inc (Math.pow 1.4 gx))
+           goff (map-indexed 
+                 (fn [g,m]
+                   (map-indexed
+                    (if (not= 0 pairing)
+                      #(+ (ioff %1) 
+                          (+ (* 0.7 (+ g -0.5)) glen (* o-gp gstart))
+                          %2)
+                      #(+ (ioff %1) 
+                          (+ (* 0.3 g) 0.8 )
+                          %2))
+                    m)) 
+                 g)]
        goff)) (expanded-groups pairing n)))
 
 (defn item-offsets [pairing n]
@@ -276,6 +288,7 @@ g)]
   "read [col row] form from event.target.id string"
   (let [[k n] (reader/read-string (-> event .-target .-id))]
     (do
+      #_(you-clicked-on k n)
       (prime-or-delete! k n)
      )))
 
@@ -299,9 +312,33 @@ g)]
               :class "blobs"
               }]))
 
+(r/defc render-html-item < r/reactive [k n]
+  "render item n in kth heap"
+  (let [g @game
+        pairing (:pairing g)
+        heaps (:heaps g)]
+    [:div {:class "blobs"
+           :id (str "[" k " " n "]")
+           :on-click (fn [e] (item-clicked e))
+           :style 
+           {:left (px (+ 0.3 (* 2 k)))
+            :top (px (- (item-offset pairing (nth heaps k) n) 0.3))
+            :width (px (* radius 2))
+            :height (px (* radius 2))
+            :background-color (if (is-highlighted? k n) 
+                                "rgba(255,80,100,1)" 
+                                "rgba(100,150,255,1)") 
+            }
+}]))
+
 (r/defc render-heap < r/reactive [k n]
   [:g
    (map #(render-item k %) (range n))]
+  )
+
+(r/defc render-html-heap < r/reactive [k n]
+  [:div
+   (map #(render-html-item k %) (range n))]
   )
 
 (defn draw-heap [k n]
@@ -309,9 +346,17 @@ g)]
     (render-heap k n)
 ))
 
+(defn draw-html-heap [k n]
+  (if (> n 0)
+    (render-html-heap k n)
+))
 
 (r/defc render-heaps < r/reactive []
   [:g (map-indexed draw-heap (:heaps (r/react game)))]
+  )
+
+(r/defc render-html-heaps < r/reactive []
+  [:div (map-indexed draw-html-heap (:heaps (r/react game)))]
   )
 
 (r/defc render-toolbar < r/reactive []
@@ -335,11 +380,23 @@ g)]
 )
 
 (r/defc render-svg-board < r/reactive [gsize]
-  (let [gsz (* 2 gsize)]
-    [:svg {:class "playfield"
-           :width gsize :height gsz
-           :viewBox (str "0 0 " gsize " " gsz)}
-     (render-heaps)])
+  (let [gsz (* 1.8 gsize)]
+    [:div {:class "bordered"}
+     [:svg {:class "playfield"
+            :width gsize :height gsz
+            :viewBox (str "0 0 " gsize " " gsz)}
+      (render-heaps)]])
+)
+
+(r/defc render-html-board < r/reactive [gsize]
+  (let [gsz (* 1.8 gsize)]
+    [:div {:class "bordered"}
+     [:div {:class "playfield"
+            ;; :width gsize 
+            }
+      [:div {:class "pad"}
+       (render-html-heaps)]
+      ]])
 )
 
 (r/defc render-game < r/reactive []
@@ -348,10 +405,8 @@ g)]
    (debug-game)
    (render-toolbar)
    [:div
-    #_(render-blobs)
-    (render-svg-board grid-size)
+    (render-html-board grid-size)
     ]
-   (render-toolbar)
  ])
 
 (r/mount (render-game)
