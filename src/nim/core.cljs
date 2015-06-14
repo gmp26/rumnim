@@ -11,7 +11,7 @@
 
 (def tick-in-ms 250)
 
-(def unit (Math.floor (/ 300 12)))
+(def unit (identity (/ 300 12)))
 
 (defn px [x]
   (str (* x unit) "px"))
@@ -55,31 +55,9 @@
   (msb (apply max heaps))
   )
 
-(def level-spec 
-  [2 6 1 15])
-
-(defn game-setup []
-  "setup or restart the game"
-  (let [heaps (apply rand-heaps level-spec)]
-    {:primed nil
-     :heaps heaps
-     :level 1
-     :round 1
-     :grouping heaps
-     :pairing 0}))
-
 ;;
-;; define game as the single? game state atom
+;; rounds and levels
 ;;
-;; TODO: change to defonce
-;;
-(defonce game
-  (atom (game-setup)))
-
-(defn next-game! [game]
-  (let [{:keys [level round]} game]
-    [level round]))
-
 (def level2-heaps [
                    [1 0]
                    [1 1]
@@ -120,6 +98,45 @@
       (if (not= nil result)
         {:heaps result :level level :round round}
         (recur (inc level) 0)))))
+
+
+
+(def level-spec 
+  [2 6 1 15])
+
+(def messages
+  {:none {:visible false}
+   :instructions {:visible true
+                  :title "Instructions"
+                  :msgs [(str "Take turns to remove as many drips as you like from one drip trail."
+                               " Click once to choose, and once again to confirm."
+                               " Take the very last drip to win."
+                               " After pressing 'New Game', you have 30 seconds to make the first move or
+the computer will go first.")
+                         (str "Each game can score up to 100 points."
+                              " If you press 'Hint', 'Pair' or 'Pair Again' the computer may change the game value."
+                              " If you do not use help, you may double the game value." " First to 500 wins. Reload the page to reset the score.")] 
+                  }
+   })
+
+(defn game-setup []
+  "setup or restart the game"
+  (let [heaps (apply rand-heaps level-spec)]
+    {:primed nil
+     :heaps heaps
+     :grouping heaps
+     :pairing 0
+     :score [2 3]
+     :status :instructions
+}))
+
+;;
+;; define game as the single? game state atom
+;;
+;; TODO: change to defonce
+;;
+(defonce game
+  (atom (game-setup)))
 
 ;;
 ;; layout
@@ -229,7 +246,7 @@
         new-heaps (heaps-at-k-take-n heaps k n)]
     (do 
       (swap! game #(assoc % :heaps new-heaps))
-      (println "taking " n " from " k))))
+      #_(println "taking " n " from " k))))
 
 (defn is-primed? [k n]
   "is item at col k, height n, primed for deletion?"
@@ -326,10 +343,11 @@
             :width (px (* radius 2))
             :height (px (* radius 2))
             :background-color (if (is-highlighted? k n) 
-                                "rgba(255,80,100,1)" 
-                                "rgba(100,150,255,1)") 
+                                "rgba(100, 180, 255, 1)" 
+                                "rgba(19, 139, 174, 1)")
             }
-}]))
+           }
+     ]))
 
 (r/defc render-heap < r/reactive [k n]
   [:g
@@ -364,13 +382,15 @@
         level (:level game-state)
         pairing (:pairing game-state)
         pair? (< pairing (max-pairing (:heaps game-state)))] 
-    [:div {:class "controlls"}
+    [:div {:class "controls"}
      [:button {:on-click start!} "New game"]
      [:button {:on-click hint!} "Hint"]
-     [:button {:on-click pair!} (if pair? 
-                                  (if (= 0 pairing) "Pair" "Pair again") 
-                                  "Separate")]
-     [:select {:on-change change-level! :value level}
+     [:button {:on-click pair!} 
+      (if pair? 
+        (if (= 0 pairing) 
+          "Pair" "Pair again") 
+        "Separate")]
+     #_[:select {:on-change change-level! :value level}
       [:option {:value 1} "Level 1"]
       [:option {:value 2} "Level 2"]
       [:option {:value 3} "Level 3"]
@@ -388,26 +408,57 @@
       (render-heaps)]])
 )
 
+(defn player-score! []
+  (nth (:score @game) 0))
+
+(defn computer-score! []
+  (nth (:score @game) 1))
+
 (r/defc render-html-board < r/reactive [gsize]
-  (let [gsz (* 1.8 gsize)]
-    [:div {:class "bordered"}
-     [:div {:class "playfield"
-            ;; :width gsize 
-            }
-      [:div {:class "pad"}
-       (render-html-heaps)]
-      ]])
-)
+  [:div {:class "bordered"}
+   [:div {:class "score player"}
+    [:h2 
+     "Player"
+     [:br]
+     [:span (player-score!)]]
+    ]
+   [:div {:class "score computer"}
+    [:h2 "Computer"
+     [:br]
+     [:span (computer-score!)]]
+    ]
+   [:div {:class "playfield"}
+    [:div {:class "pad"}
+     (render-html-heaps)
+     ]]]
+  )
+
+(r/defc para < r/reactive [text]
+  [:p {:class "msg"} text])
+
+(r/defc render-popover < r/reactive []
+  (let [status ((:status (r/react game)) messages)
+        visible (:visible status)
+        title (:title status)
+        msgs (:msgs status)]
+    (if visible
+      [:div {:class "popover"}
+       [:div {:class "title"} title]
+       (map para msgs)]
+      )))
 
 (r/defc render-game < r/reactive []
   [:div
-   [:h1 "Play NIM" ]
-   (debug-game)
+   [:h1 "Nim Calculator" ]
+  (debug-game)
    (render-toolbar)
    [:div
     (render-html-board grid-size)
+    (render-popover)
     ]
- ])
+   ]
+  
+)
 
 (r/mount (render-game)
          (.getElementById js/document "game"))
