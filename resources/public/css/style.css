@@ -8,21 +8,31 @@ html, body {
     background-color: white;
     color: black;
     font-family: "Helvetica Neue", "Arial", sans-serif;
+    max-width:300px;
 }
 
 h1 {
     margin: 3px 0;
     color: #138BAE;
     font-size: 1em;
+    max-width:300px;
 }
 
 .controls {
     background: white;
     padding: 5px 2px 0px 0px;
     margin: 0 0 3px 0
+    max-width:300px;
 }
+
+.controls * {
+   font-size: 11px;
+   font-weight: bold;
+}
+
 svg {
     margin: 0;
+    max-width:300px;
 }
 
 .blobs {
@@ -41,15 +51,12 @@ svg {
     -webkit-transition:top ease-in 500ms;
     cursor: pointer;
 }
-.blobs:hover {
-    background-color: rgb(100, 180, 255) !important;
+
+.blobs:hover, .blobs.hovered {
+    background-color: rgba(255, 180, 0, 1) !important;
 }
 
 
-.controls * {
-   font-size: 11px;
-   font-weight: bold;
-}
 
 button {
     color: white;
@@ -103,8 +110,9 @@ div {
 }
 
 .score {
-    top: 520px;
-    position: relative;
+    top: 470px;
+    max-width: 80px;
+    position: absolute;
     color: red;
     opacity: 0.3;
     font-size: 12px;
@@ -113,17 +121,17 @@ div {
 }
 .score h2 {
     text-align: center;
-    margin: -40px 13px 0 17px;
+    margin: 0;
+    padding: 0;
 }
 .score.player {
-    right: 105px;
+    left: 27px;
     padding: 0;
     margin: 0;
 }
 
 .score.computer {
-    top: 517px;
-    left: 97px;
+    left: 237px;
     padding: 0;
     margin: 0;
 }
@@ -158,6 +166,8 @@ div {
     top: 40px;
     left: 20px;
     width: 260px;
+    max-width: 260px;
+    margin: 0;
     padding: 10px;
     background-color: rgba(255,255,255,0.9);
     font-size: 14px;
@@ -165,4 +175,20 @@ div {
 .popover .title {
     font-weight: bold;
     font-size: 16px;
+}
+.flash-box {
+    float: left;
+    width: 300px;
+    position: absolute;
+    left: -5px;
+    top:0px;
+}
+.flash-box .msg {
+    position: relative;
+    text-align: center;
+    color: #000;
+    margin: 0;
+    padding: 0;
+    font-size: 15px;
+    font-weight: bold;
 }

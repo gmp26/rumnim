@@ -104,18 +104,19 @@
 (def level-spec 
   [2 6 1 15])
 
+(r/defc instructions < r/reactive [] 
+  [:div
+   [:p "Take turns to remove as many drips as you like from a single drip trail."]
+   [:p " Click once to choose, and once again in the same place to confirm. Take the very last drip to win the game."]
+   [:p "Press 'New Game' to start, you then have 30 seconds to make the first move before
+Al the computer loses patience and starts anyway."]
+   ])
+
 (def messages
   {:none {:visible false}
-   :instructions {:visible false
+   :instructions {:visible true
                   :title "Instructions"
-                  :msgs [(str "Take turns to remove as many drips as you like from one drip trail."
-                               " Click once to choose, and once again to confirm."
-                               " Take the very last drip to win."
-                               " After pressing 'New Game', you have 30 seconds to make the first move or
-the computer will go first.")
-                         (str "Each game can score up to 100 points."
-                              " If you press 'Hint', 'Pair' or 'Pair Again' the computer may change the game value."
-                              " If you do not use help, you may double the game value." " First to 500 wins. Reload the page to reset the score.")] 
+                  :body instructions 
                   }
    })
 
@@ -124,10 +125,12 @@ the computer will go first.")
   (let [heaps (apply rand-heaps level-spec)]
     {:primed nil
      :heaps heaps
-     :grouping heaps
      :pairing 0
      :score [2 3]
+     :hovered nil
      :status :instructions
+     :flashes :none
+     :countdown 0
 }))
 
 ;;
@@ -137,6 +140,12 @@ the computer will go first.")
 ;;
 (defonce game
   (atom (game-setup)))
+
+(def flashes
+  {:none #("")
+   :als #("Al's turn")
+   :yours #("Your turn")
+   :timer #((str (:countdown @game)))})
 
 ;;
 ;; layout
@@ -234,7 +243,12 @@ the computer will go first.")
 ;;
 (defn start! []
   "start a new game"
-  (swap! game game-setup))
+  (do
+    (swap! game game-setup)
+    (swap! game #(assoc % 
+                   :timer 30 
+                   :status :none
+                   :flashes :als))))
 
 (defn change-level! [event]
   (.debug js/console (-> event .-target .-value))
@@ -255,8 +269,11 @@ the computer will go first.")
 
 (defn is-highlighted? [k n]
   "is item at col k, height n, highlighted for deletion?"
-  (let [[k' n' :as p] (:primed @game)]
-    (and p (= k k') (>= n n'))))
+  (let [[k' n' :as p] (:primed @game)
+        [kh nh :as h] (:hovered @game)]
+    (or 
+     (and h (= k kh) (>= n nh)) 
+     (and p (= k k') (>= n n')))))
 
 (defn un-prime! []
   "unprime all"
@@ -265,6 +282,14 @@ the computer will go first.")
 (defn prime! [k n]
   "prime the nth item in heap k"
   (swap! game #(assoc % :primed [k n])))
+
+(defn mouse-out! [k n]
+  "mouse-out all"
+  (swap! game #(assoc % :hovered nil)))
+
+(defn mouse-over! [k n]
+  "hover over the nth item in heap k"
+  (swap! game #(assoc % :hovered [k n])))
 
 (defn at-k-leave-n! [k n]
   (- (nth (:heaps @game) k) (- n 0)))
@@ -309,6 +334,19 @@ the computer will go first.")
       (prime-or-delete! k n)
      )))
 
+(defn item-over [event]
+  "read [col row] form from event.target.id string"
+  (let [[k n] (reader/read-string (-> event .-target .-id))]
+    (do
+      (mouse-over! k n)
+     )))
+
+(defn item-out [event]
+  "read [col row] form from event.target.id string"
+  (let [[k n] (reader/read-string (-> event .-target .-id))]
+    (do
+      (mouse-out! k n)
+     )))
 ;;
 ;; rendering
 ;;
@@ -333,20 +371,26 @@ the computer will go first.")
   "render item n in kth heap"
   (let [g @game
         pairing (:pairing g)
-        heaps (:heaps g)]
-    [:div {:class "blobs"
-           :id (str "[" k " " n "]")
-           :on-click (fn [e] (item-clicked e))
-           :style 
-           {:left (px (+ 0.3 (* 2 k)))
-            :top (px (- (item-offset pairing (nth heaps k) n) 0.3))
-            :width (px (* radius 2))
-            :height (px (* radius 2))
-            :background-color (if (is-highlighted? k n) 
-                                "rgba(100, 180, 255, 1)" 
-                                "rgba(19, 139, 174, 1)")
-            }
-           }
+        heaps (:heaps g)
+        key (str "[" k " " n "]")]
+    [:div 
+     
+     {:id key
+      :class "blobs"
+      :key key 
+      :on-click (fn [e] (item-clicked e))
+      :on-mouse-over (fn [e] (item-over e))
+      :on-mouse-out (fn [e] (item-out e))
+      :style 
+      {:left (px (+ 0.3 (* 2 k)))
+       :top (px (- (item-offset pairing (nth heaps k) n) 0))
+       :width (px (* radius 2))
+       :height (px (* radius 2))
+       :background-color (if (is-highlighted? k n) 
+                           "rgba(255, 180, 0, 1)" 
+                           "rgba(100, 180, 255, 1)")
+       }}
+     
      ]))
 
 (r/defc render-heap < r/reactive [k n]
@@ -355,7 +399,7 @@ the computer will go first.")
   )
 
 (r/defc render-html-heap < r/reactive [k n]
-  [:div
+  [:div {:key (str "heap" k "-" n)}
    (map #(render-html-item k %) (range n))]
   )
 
@@ -414,37 +458,40 @@ the computer will go first.")
 (defn computer-score! []
   (nth (:score @game) 1))
 
+(r/defc render-flash < r/reactive []
+  [:div.flash-box
+   [:div.msg "Al's turn"]])
+
 (r/defc render-html-board < r/reactive [gsize]
-  [:div {:class "bordered"}
-   [:div {:class "score player"}
+  [:div.bordered
+   [:div.score.player
     [:h2 
-     "Player"
+     "You"
      [:br]
      [:span (player-score!)]]
     ]
-   [:div {:class "score computer"}
-    [:h2 "Computer"
+   [:div.score.computer
+    [:h2 "Al"
      [:br]
-     [:span (computer-score!)]]
-    ]
-   [:div {:class "playfield"}
-    [:div {:class "pad"}
-     (render-html-heaps)
-     ]]]
-  )
+     [:span (computer-score!)]]]
+   (render-flash)
+   [:div.playfield
+    [:div.pad
+     (render-html-heaps)]]])
 
 (r/defc para < r/reactive [text]
   [:p {:class "msg"} text])
+
 
 (r/defc render-popover < r/reactive []
   (let [status ((:status (r/react game)) messages)
         visible (:visible status)
         title (:title status)
-        msgs (:msgs status)]
+        body (:body status)]
     (if visible
-      [:div {:class "popover"}
+      [:div {:class "popover" :key "popover"}
        [:div {:class "title"} title]
-       (map para msgs)]
+       (body {:key "body"})]
       )))
 
 (r/defc render-game < r/reactive []
@@ -481,5 +528,15 @@ the computer will go first.")
 ;;                      #(when-let [cmd (get key-mapping (.-keyCode %))]
 ;;                         (handle-command! cmd))))
 
-;; (defonce tick-watch
-;;   (js/setInterval tick! tick-in-ms))
+(def one-second 1000)
+
+(defn tick! []
+  (let [timer (:countdown @game)]
+    (if (> 0 timer)
+      (swap! game #(assoc % :countdown (- timer 1)))
+      (do
+        #_(al-move!))
+)))
+
+(defonce tick-watch
+  (js/setInterval tick! one-second))
