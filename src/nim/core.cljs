@@ -108,7 +108,7 @@
   [:div
    [:p "Take turns to remove as many drips as you like from a single drip trail."]
    [:p " Click once to choose, and once again in the same place to confirm. Take the very last drip to win the game."]
-   [:p "Press 'New Game' to start, you then have 30 seconds to make the first move before
+   [:p "Press 'New Game' to start, you then have 20 seconds to make the first move before
 Al the computer loses patience and starts anyway."]
    ])
 
@@ -128,9 +128,9 @@ Al the computer loses patience and starts anyway."]
      :pairing 0
      :score [2 3]
      :hovered nil
-     :status :instructions
-     :flashes :none
-     :countdown 0
+     :status :none
+     :flash-key :none
+     :countdown nil
 }))
 
 ;;
@@ -141,11 +141,12 @@ Al the computer loses patience and starts anyway."]
 (defonce game
   (atom (game-setup)))
 
-(def flashes
-  {:none #("")
-   :als #("Al's turn")
-   :yours #("Your turn")
-   :timer #((str (:countdown @game)))})
+(defn flashes [a-key]
+  (condp = a-key 
+    :none ""
+    :als "Al's turn"
+    :yours "Your turn"
+    :timer (str "Move or Al will go in " (:countdown @game) " s")))
 
 ;;
 ;; layout
@@ -246,9 +247,9 @@ Al the computer loses patience and starts anyway."]
   (do
     (swap! game game-setup)
     (swap! game #(assoc % 
-                   :timer 30 
+                   :countdown 20 
                    :status :none
-                   :flashes :als))))
+                   :flash-key :timer))))
 
 (defn change-level! [event]
   (.debug js/console (-> event .-target .-value))
@@ -302,10 +303,17 @@ Al the computer loses patience and starts anyway."]
       (from-k-take-n! k (at-k-leave-n! k n)))
     (prime! k n)))
 
-(defn hint! []
+(defn show-best-move! []
   "highlight the next best move"
   (let [[k n] (get-best-move (:heaps @game))]
     (prime! k (at-k-leave-n! k n))))
+
+(defn hint! []
+  (swap! game #(assoc % 
+                 :status :instructions
+                 :countdown nil
+                 :flash-key :none
+                 )))
 
 (defn next-pairing [p] 
   (inc p))
@@ -459,8 +467,9 @@ Al the computer loses patience and starts anyway."]
   (nth (:score @game) 1))
 
 (r/defc render-flash < r/reactive []
-  [:div.flash-box
-   [:div.msg "Al's turn"]])
+  (let [flash-msg (flashes (:flash-key (r/react game)))]
+    [:div.flash-box
+     [:div.msg flash-msg]]))
 
 (r/defc render-html-board < r/reactive [gsize]
   [:div.bordered
@@ -497,7 +506,7 @@ Al the computer loses patience and starts anyway."]
 (r/defc render-game < r/reactive []
   [:div
    [:h1 "Drips" ]
-  (debug-game)
+   (debug-game)
    (render-toolbar)
    [:div
     (render-html-board grid-size)
@@ -530,13 +539,25 @@ Al the computer loses patience and starts anyway."]
 
 (def one-second 1000)
 
+(defn al-move! []
+  (println "al should move"))
+
+(defn make-best-move! []
+  (swap! game #(assoc % :countdown nil))
+)
+
 (defn tick! []
   (let [timer (:countdown @game)]
-    (if (> 0 timer)
-      (swap! game #(assoc % :countdown (- timer 1)))
-      (do
-        #_(al-move!))
-)))
+    (do
+      (println (str "tick " timer))
+      (if timer
+        (do
+          (swap! game #(assoc % :countdown (- timer 1)))
+          (cond  
+           (= timer 0) (show-best-move!)
+           (= timer -3) (make-best-move!)
+           :else (println timer))
+           ))))
 
-(defonce tick-watch
-  (js/setInterval tick! one-second))
+  (defonce tick-watch
+    (js/setInterval tick! one-second)))
