@@ -295,13 +295,29 @@ Al the computer loses patience and starts anyway."]
 (defn at-k-leave-n! [k n]
   (- (nth (:heaps @game) k) (- n 0)))
 
+(defn make-best-move! []
+  (do 
+    (swap! game #(assoc % 
+                   :countdown nil
+                   :flash-key :yours
+                   :pairing 0
+                   :primed nil))
+    (let [[k,n] (get-best-move (:heaps @game))]
+      (from-k-take-n! k (at-k-leave-n! k n)))
+    ))
+
 (defn prime-or-delete! [k n]
   "item k n is to be primed for deletion, or deleted if already primed"
-  (if (is-primed? k n)
-    (do
-      (un-prime!)
-      (from-k-take-n! k (at-k-leave-n! k n)))
-    (prime! k n)))
+  (if (or (= (:flash-key @game) :yours)
+          (= (:flash-key @game) :timer)) 
+    (if (is-primed? k n)
+      (do
+        (un-prime!)
+        (swap! game #(assoc % 
+                       :flash-key :als
+                       :countdown 2))
+        (from-k-take-n! k (at-k-leave-n! k n)))
+      (prime! k n))))
 
 (defn show-best-move! []
   "highlight the next best move"
@@ -537,14 +553,7 @@ Al the computer loses patience and starts anyway."]
 ;;                      #(when-let [cmd (get key-mapping (.-keyCode %))]
 ;;                         (handle-command! cmd))))
 
-(def one-second 1000)
 
-(defn al-move! []
-  (println "al should move"))
-
-(defn make-best-move! []
-  (swap! game #(assoc % :countdown nil))
-)
 
 (defn tick! []
   (let [timer (:countdown @game)]
@@ -555,9 +564,13 @@ Al the computer loses patience and starts anyway."]
           (swap! game #(assoc % :countdown (- timer 1)))
           (cond  
            (= timer 0) (show-best-move!)
+           (= timer -1) (show-best-move!)
+           (= timer -2) (show-best-move!)
            (= timer -3) (make-best-move!)
            :else (println timer))
-           ))))
+          )))))
 
-  (defonce tick-watch
-    (js/setInterval tick! one-second)))
+(def one-second 1000)
+  
+(defonce tick-watch
+  (js/setInterval tick! one-second))
