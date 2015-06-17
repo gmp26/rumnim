@@ -115,9 +115,27 @@
 Al the computer loses patience and starts anyway."]
    [:button {:on-click start!} "New game"]
    [:button {:on-click continue!} "OK"]
-   [:p "Use the 'Pair' button to work out how to win."]
+   [:p "The 'Pair/Pair again/Separate' button can help you calculate a winning move."]
    [:button {:on-click pair!} (pair-label)]
    ])
+
+(r/defc well-done < r/reactive []
+  [:div
+   [:p "Well done."] 
+   [:p "If you understand the winning strategy you should be able to beat Al whenever you like!"]
+   [:p "We'd love to hear your explanation of how to win. Emailwild@maths.org with your thoughts."]
+   [:button {:on-click start!} "New game"]
+   [:button {:on-click continue!} "OK"]
+])
+
+(r/defc try-again < r/reactive []
+  [:div
+   [:p "Bad luck, but try again."]
+   [:p "You may find it helpful to analyse what Al does. Try using the Pair button after he's made a move."]
+   [:p "See if you can work out how he leaves you in a losing position."]
+   [:button {:on-click start!} "New game"]
+   [:button {:on-click continue!} "OK"]
+])
 
 (def messages
   {:none {:visible false}
@@ -125,6 +143,12 @@ Al the computer loses patience and starts anyway."]
                   :title "Rules"
                   :body instructions 
                   }
+   :you-won {:visible true
+             :title "You won!"
+             :body well-done}
+   :al-won {:visible true
+            :title "Al won!"
+            :body try-again}
    })
 
 (defn game-setup []
@@ -138,6 +162,7 @@ Al the computer loses patience and starts anyway."]
      :status :none
      :flash-key :none
      :countdown nil
+     :best nil
 }))
 
 ;;
@@ -153,7 +178,9 @@ Al the computer loses patience and starts anyway."]
     :none ""
     :als "Al's turn"
     :yours "Your turn"
-    :timer (str "Move or let Al go in " (:countdown @game) " s")))
+    :timer (str "Move or let Al go in " (:countdown @game) " s"
+)
+    :game-over "Game Over"))
 
 ;;
 ;; layout
@@ -303,7 +330,8 @@ Al the computer loses patience and starts anyway."]
   "highlight the next best move"
   (let [[k n] (get-best-move (:heaps @game))]
     (do (prime! k (at-k-leave-n! k n))
-        ([k n]))))
+        (println (str "best move" [k n]))
+        [k n])))
 
 (defn hint! []
   (do
@@ -334,7 +362,7 @@ Al the computer loses patience and starts anyway."]
         (from-k-take-n! k (at-k-leave-n! k n)))
       (prime! k n))))
 
-(defn make-best-move! [k n]
+(defn make-best-move! [[k n]]
   (do 
     (swap! game #(assoc % 
                    :countdown nil
@@ -557,7 +585,6 @@ Al the computer loses patience and starts anyway."]
     (render-popover)
     ]
    ]
-  
 )
 
 (r/mount (render-game)
@@ -582,6 +609,18 @@ Al the computer loses patience and starts anyway."]
 ;;                         (handle-command! cmd))))
 
 
+(defn show-a-winner! []
+  (if (= 0 (count (:heaps @game)))
+    (let [winner (:flash-key @game)
+          [yu al] (:score @game)
+          [score status]  (if (= :yours winner)
+                         [[(inc yu) al] :you-won]
+                         [[yu (inc al)] :al-won])]
+      (swap! game #(assoc %
+                     :status status 
+                     :flash-key :game-over
+                     :score score)))))
+
 
 (defn tick! []
   (let [timer (:countdown @game)]
@@ -592,10 +631,12 @@ Al the computer loses patience and starts anyway."]
           (swap! game #(assoc % :countdown (- timer 1)))
           (cond  
            (= timer 0) (do
-                         (swap! game #(assoc % 
-                                        :flash-key :als
-                                        :best (show-best-move!))))
-           (= timer -3) (apply make-best-move! (:best @game))
+                         (let [[k n] (show-best-move!)]
+                           (println (str "best move is: " [k n]))
+                           (swap! game #(assoc % 
+                                          :flash-key :als
+                                          :best [k n]))))
+           (= timer -3) (make-best-move! (:best @game))
            :else (println timer))
           )))))
 
