@@ -101,39 +101,12 @@ div {
     /* -moz-filter: url("#shadowed-goo"); */
     /* -ms-filter: url("#shadowed-goo"); */
     /* -filter: url("#shadowed-goo"); */
-    width: 300px !important;
+    width: 290px !important;
 }
 
 .pad {
-    padding: 170% 0 0 0;
-    width: 300px !important;
-}
-
-.score {
-    top: 470px;
-    max-width: 80px;
-    position: absolute;
-    color: red;
-    opacity: 0.3;
-    font-size: 12px;
-    padding: 0;
-    margin: 0;
-}
-.score h2 {
-    text-align: center;
-    margin: 0;
-    padding: 0;
-}
-.score.player {
-    left: 27px;
-    padding: 0;
-    margin: 0;
-}
-
-.score.computer {
-    left: 237px;
-    padding: 0;
-    margin: 0;
+    padding: 179% 0 0 0;
+    width: 290px !important;
 }
 
 .limited {
@@ -144,8 +117,9 @@ div {
     padding: 0;
     margin: 0;
     position: absolute;
-    width: 300px !important;;
+
     border: 5px solid rgba(19, 139, 174, 1);
+    border-top: 0;
     background-image: url("../assets/trails2.png");
     background-size: 290px;
     background-color: rgba(255,40,40,0.1);
@@ -180,15 +154,26 @@ div {
     float: left;
     width: 300px;
     position: absolute;
-    left: -5px;
     top:0px;
+    padding-top: 3px;
+    left: -5px;
+    background: rgb(19, 139, 174);
 }
 .flash-box .msg {
     position: relative;
     text-align: center;
-    color: #000;
+    color: #fff;
     margin: 0;
-    padding: 0;
+    padding: 5px 5px;
     font-size: 15px;
     font-weight: bold;
+}
+.flash-box .score {
+    position: relative;
+    float: right;
+    text-align: right;
+    color: #fff;
+    margin: 0;
+    padding: 5px 5px 5px 0px;
+    font-size: 12px;
 }
