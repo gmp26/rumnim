@@ -112,10 +112,10 @@
    [:p "Click once to choose, and once again in the same place to confirm. Take the very last drip to win the game."]
    [:p "Press 'New Game' to start, you then have 20 seconds to make the first move before
 Al the computer loses patience and starts anyway."]
-   [:button {:on-click start!} "New game"]
-   [:button {:on-click continue!} "OK"]
+   [:button {:on-click start! :on-touch start!} "New game"]
+   [:button {:on-click continue! :on-touch continue!} "OK"]
    [:p "The 'Pair/Pair again/Separate' button can help you calculate a winning move."]
-   [:button {:on-click pair!} (pair-label)]
+   [:button {:on-click pair! :on-touch pair!} (pair-label)]
    ])
 
 (r/defc well-done < r/reactive []
@@ -125,16 +125,16 @@ Al the computer loses patience and starts anyway."]
    [:p "We'd love to hear your explanation of how to win. Email "
     [:a {:href "mailto:wild@maths.org"} "wild@maths.org"]
     " with your thoughts."]
-   [:button {:on-click start!} "New game"]
-   [:button {:on-click continue!} "OK"]
+   [:button {:on-click start! :on-touch start!} "New game"]
+   [:button {:on-click continue! :on-touch continue!} "OK"]
 ])
 
 (r/defc try-again < r/reactive []
   [:div
    [:p "Bad luck, but try again."]
    [:p "You may find it helpful to study what Al does. Try using the 'Pair' 'Pair again' 'Separate' button after he's made a move to see what's special about the losing positions he leaves you in."]
-   [:button {:on-click start!} "New game"]
-   [:button {:on-click continue!} "OK"]
+   [:button {:on-click start! :on-touch start!} "New game"]
+   [:button {:on-click continue! :on-touch continue!} "OK"]
 ])
 
 (def messages
@@ -461,6 +461,8 @@ Al the computer loses patience and starts anyway."]
       :class "blobs"
       :key key 
       :on-click (fn [e] (item-clicked e))
+      :on-touch (fn [e] (item-clicked e))
+      :on-touch-end (fn [e] (item-out e))
       :on-mouse-over (fn [e] (item-over e))
       :on-mouse-out (fn [e] (item-out e))
       :style 
@@ -497,19 +499,21 @@ Al the computer loses patience and starts anyway."]
   )
 
 (defn pair-label []
-  (let [pairing (:pairing @game)
-        pair? (< pairing (max-pairing (:heaps @game)))]
-    (if pair? 
-        (if (= 0 pairing) "Pair" "Pair again") 
-        "Separate")))
+  "Pairer"
+)  
+  ;; (let [pairing (:pairing @game)
+  ;;       pair? (< pairing (max-pairing (:heaps @game)))]
+  ;;   (if pair? 
+  ;;       (if (= 0 pairing) "Pair" "Pair again") 
+  ;;       "Separate")))
 
 (r/defc render-toolbar < r/reactive []
   (let [game-state (r/react game)
         level (:level game-state)] 
     [:div {:class "controls"}
-     [:button {:on-click start!} "New game"]
-     [:button {:on-click hint!} "Rules"]
-     [:button {:on-click pair!} (pair-label)]
+     [:button {:on-click start! :on-touch start!} "New game"]
+     [:button {:on-click hint! :on-touch hint!} "Rules"]
+     [:button {:on-click pair! :on-touch pair!} (pair-label)]
      #_[:select {:on-change change-level! :value level}
       [:option {:value 1} "Level 1"]
       [:option {:value 2} "Level 2"]
