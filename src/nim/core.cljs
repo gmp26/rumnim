@@ -98,7 +98,6 @@
         (recur (inc level) 0)))))
 
 
-
 (def level-spec 
   [2 6 1 15])
 
@@ -248,7 +247,7 @@ Al the computer loses patience and starts anyway."]
   (reduce bit-xor heaps))
 
 (defn take-one-moves [heaps]
-  "return a list of possible moves which take 1, or nil if heaps are all empty"
+  "return a list of possible random moves which take 1, or nil if heaps are all empty"
   (let [x-ifnz (fn [index heap-size] 
                  (if (> heap-size 0) [index 1]))]
     (seq (keep-indexed x-ifnz heaps))))
@@ -261,7 +260,12 @@ Al the computer loses patience and starts anyway."]
       nil))
   )
 
-
+(defn random-go [heaps]
+  (let [ks (seq (flatten (keep-indexed #(if (> %2 0) [%1]) heaps)))]
+    (if (> (count ks) 0)
+      (let [k (rand-nth ks)
+            n (rand-int (nth heaps k))]
+        [k, n]))))
 ;;
 ;; mutate game
 ;;
@@ -305,7 +309,6 @@ Al the computer loses patience and starts anyway."]
   "prime the nth item in heap k"
   (swap! game #(assoc % :primed [k n])))
 
-
 ;
 ; problem area starts
 ;
@@ -324,7 +327,7 @@ Al the computer loses patience and starts anyway."]
             n (nth heaps k)
             n' (bit-xor n nsum)]
         [k (- n n')])
-      (random-move heaps))))
+      (random-go heaps))))
 
 (defn show-best-move! []
   "highlight the next best move"
@@ -348,6 +351,7 @@ Al the computer loses patience and starts anyway."]
       (swap! game #(assoc % :heaps new-heaps))
       (println "taking " n " from " k))))
 
+(declare show-a-winner!)
 
 (defn prime-or-delete! [k n]
   "item k n is to be primed for deletion, or deleted if already primed"
@@ -359,7 +363,8 @@ Al the computer loses patience and starts anyway."]
         (swap! game #(assoc % 
                        :flash-key :als
                        :countdown 2))
-        (from-k-take-n! k (at-k-leave-n! k n)))
+        (from-k-take-n! k (at-k-leave-n! k n))
+        (show-a-winner!))
       (prime! k n))))
 
 (defn make-best-move! [[k n]]
@@ -632,10 +637,13 @@ Al the computer loses patience and starts anyway."]
           (cond  
            (= timer 0) (do
                          (let [[k n] (show-best-move!)]
-                           (println (str "best move is: " [k n]))
-                           (swap! game #(assoc % 
-                                          :flash-key :als
-                                          :best [k n]))))
+                           (if (or (= nil k) (= nil n))
+                             (show-a-winner!)
+                             (do
+                               (println (str "best move is: " [k n]))
+                               (swap! game #(assoc % 
+                                              :flash-key :als
+                                              :best [k n]))))))
            (= timer -3) (make-best-move! (:best @game))
            :else (println timer))
           )))))
