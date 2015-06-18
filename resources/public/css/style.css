@@ -12,27 +12,23 @@ html, body {
 }
 
 h1 {
-    margin: 3px 0;
+    display: inline;
+    margin: 3px 10px 0 0;
     color: #138BAE;
     font-size: 1em;
     max-width:300px;
 }
 
 .controls {
-    background: white;
-    padding: 5px 2px 0px 0px;
-    margin: 0 0 3px 0
-    max-width:300px;
+    display: inline;
+    padding: 5px 0px 0px 0px;
+    margin: 0 0 0 0
+    max-width: 300px;
 }
 
 .controls * {
    font-size: 11px;
    font-weight: bold;
-}
-
-svg {
-    margin: 0;
-    max-width:300px;
 }
 
 .blobs {
@@ -53,10 +49,9 @@ svg {
 }
 
 .blobs:hover, .blobs.hovered {
-    background-color: rgba(255, 180, 0, 1) !important;
+    background-color: rgba(235, 100, 0, 1) !important; 
+    /* rgba(255, 180, 0, 1) !important; */
 }
-
-
 
 button {
     color: white;
