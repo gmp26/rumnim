@@ -1,0 +1,556 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"B",
+				"ButtonGroup"
+			],
+			[
+				"Dr",
+				"DropdownButton"
+			],
+			[
+				"Re",
+				"ReactBootstrap"
+			],
+			[
+				"st",
+				"style	Tag"
+			],
+			[
+				"font",
+				"font-size"
+			],
+			[
+				"background",
+				"background-color"
+			],
+			[
+				"ba",
+				"background-repeat"
+			],
+			[
+				"counter",
+				"counterPos"
+			],
+			[
+				"fla",
+				"flashMsg"
+			],
+			[
+				"start",
+				"startMove"
+			],
+			[
+				"bac",
+				"background-color"
+			],
+			[
+				"pa",
+				"paper-radio-group"
+			],
+			[
+				"paper",
+				"paper-radio-group"
+			],
+			[
+				"a",
+				"addEventListener"
+			],
+			[
+				"reT",
+				"reTogglebox2"
+			]
+		]
+	},
+	"buffers":
+	[
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 267.0,
+		"last_filter": "Snippet: ",
+		"selected_items":
+		[
+			[
+				"Snippet: ",
+				"Snippet: html"
+			],
+			[
+				"pack",
+				"Package Control: Install Package"
+			],
+			[
+				"package ",
+				"Package Control: Install Package"
+			],
+			[
+				"su",
+				"SublimeHaskell: Browse Declarations"
+			],
+			[
+				"pa",
+				"Package Control: Install Package"
+			],
+			[
+				"html",
+				"Snippet: html"
+			],
+			[
+				"packag",
+				"Package Control: Install Package"
+			],
+			[
+				"pac",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 575.0
+	},
+	"console":
+	{
+		"height": 126.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = '2deb499853c4371624f5a07e27c334aa' + 'bf8c4e67d14fb0525ba4f89698a6d7e1'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/Users/gmp26/CMEP/CMEP-site/partials/printables/resources/G2_RT7/index.printable.tex",
+		"/Users/gmp26/clojure/rumnim/.git/MERGE_MSG",
+		"/Users/gmp26/CMEP/CMEP-sources/new-site-data/stations.yaml",
+		"/Users/gmp26/CMEP/CMEP-sources/resources/G2_RT15_1a/index.md",
+		"/Users/gmp26/CMEP/CMEP-site/dist/swanage/.package.json",
+		"/Users/gmp26/react/nim/build/bundle.js",
+		"/Users/gmp26/react/nim/package.json",
+		"/Users/gmp26/react/nim/app/component.js",
+		"/Users/gmp26/react/react-starter/app/components/MainMenu.jsx",
+		"/Users/gmp26/react/webpack-react-starter/examples/index.html",
+		"/Users/gmp26/react/webpack-react-starter/src/HelloWorld/index.js",
+		"/Users/gmp26/react/react-starter/lib/server.js",
+		"/Users/gmp26/react/nim/app/main.js",
+		"/Users/gmp26/react/nim/webpack.config.js",
+		"/Users/gmp26/react/nim/app/modules/MyModule.js",
+		"/Users/gmp26/react/nim/app/utils.js",
+		"/Users/gmp26/react/react-app-boilerplate/app/App.js",
+		"/Users/gmp26/react/nim/build/nim.html",
+		"/Users/gmp26/react/starter-kit/examples/nim/index.html",
+		"/Users/gmp26/react/tut1/style.css",
+		"/Users/gmp26/react/starter-kit/README.md",
+		"/Users/gmp26/react/tut1/timer.js",
+		"/Users/gmp26/react/starter-kit/examples/nim/example.js",
+		"/Users/gmp26/react/starter-kit/examples/basic-jsx-external/example.js",
+		"/Users/gmp26/react/starter-kit/examples/basic-commonjs/index.js",
+		"/Users/gmp26/react/tut1/index.html",
+		"/Users/gmp26/react/starter-kit/examples/basic-jsx-external/index.html",
+		"/Users/gmp26/CMEP/CMEP-sources/examQuestions/Q1068/index.md",
+		"/Users/gmp26/CMEP/CMEP-site/layouts/resource.html",
+		"/Users/gmp26/PRAIS2/index.html",
+		"/Users/gmp26/PRAIS2/bower.json",
+		"/Users/gmp26/.profile",
+		"/Users/gmp26/dart/PRAIS2/templates/test.html",
+		"/Users/gmp26/dart/PRAIS2/templates/test.jade",
+		"/Users/gmp26/dart/PRAIS2/interpolation.md",
+		"/Users/gmp26/CMEP/CMEP-site/lib/generateHtml.js",
+		"/Users/gmp26/CMEP/CMEP-site/Gruntfile.coffee",
+		"/Users/gmp26/CMEP/CMEP-site/layouts/chrome/head.html",
+		"/Users/gmp26/CMEP/CMEP-site/.git/MERGE_MSG",
+		"/Users/gmp26/CMEP/CMEP-site/app-sources/ng-modules/mathWatch.ls",
+		"/Users/gmp26/CMEP/new-site/media-sources/tubemap2 copy_All.svg",
+		"/Users/gmp26/CMEP/new-site/.git/MERGE_MSG",
+		"/Users/gmp26/CMEP/CMEP-site/.gitignore",
+		"/Users/gmp26/.bash_profile",
+		"/Users/gmp26/CMEP/new-site/.bashrc",
+		"/Users/gmp26/CMEP/new-site/.cabal-sandbox/logs/unix-time-0.3.5.log",
+		"/Users/gmp26/CMEP/CMEP-glossary/.git/MERGE_MSG",
+		"/Users/gmp26/mysql",
+		"/opt/local/etc/mysql56/my-new.cnf",
+		"/Users/gmp26/.prelude",
+		"/Users/gmp26/CMEP/CMEP-site/layouts/station.html",
+		"/Users/gmp26/CMEP/CMEP-site/layouts/pervasiveIdea.html",
+		"/Users/gmp26/CMEP/CMEP-site/app-sources/ng-modules/search/resultsList.js.html",
+		"/Users/gmp26/CMEP/CMEP-sources/resources/A4_RT11_4/hint.md",
+		"/Users/gmp26/CMEP/CMEP-sources/.git/MERGE_MSG",
+		"/Users/gmp26/dart/takers/takers-ai/takers-ai.html",
+		"/Users/gmp26/dart/takers/takers-split/test/basic-test.html",
+		"/Users/gmp26/dart/takers/takers-split/README.md",
+		"/Users/gmp26/dart/takers/takers-split/gotit-split.html",
+		"/Users/gmp26/dart/takers/takers-split/demo.html",
+		"/Users/gmp26/dart/takers/takers-split/bower.json",
+		"/Users/gmp26/dart/takers/takers-game/test/basic-test.html",
+		"/Users/gmp26/dart/takers/takers-game/gotit-game.html",
+		"/Users/gmp26/dart/takers/takers-game/README.md",
+		"/Users/gmp26/dart/takers/takers-game/demo.html",
+		"/Users/gmp26/dart/takers/takers-game/bower.json",
+		"/Users/gmp26/dart/takers/takers-ai/gotit-ai.html",
+		"/Users/gmp26/dart/takers/takers-ai/test/basic-test.html",
+		"/Users/gmp26/dart/takers/takers-ai/README.md",
+		"/Users/gmp26/dart/takers/bower.json",
+		"/Users/gmp26/dart/takers/README.md",
+		"/Users/gmp26/dart/takers/takers-ai/bower.json",
+		"/Users/gmp26/dart/takers/takers-ai/demo.html",
+		"/Users/gmp26/dart/takers/package.json",
+		"/Users/gmp26/dart/takers/index.html",
+		"/Users/gmp26/CMEP/CMEP-site/dist/fenman/sublists.txt",
+		"/Users/gmp26/dart/gotit-blockly/gotit-split/index.html",
+		"/Users/gmp26/freebsd/Vagrantfile",
+		"/Users/gmp26/CMEP/CMEP-site/partials/printables/resources/G3_RT6_3/newtriggraphs-preview-export.pdf",
+		"/Users/gmp26/CMEP/CMEP-site/partials/printables/resources/G3_RT6_3/thingsyoumighthavetried.printable.tex",
+		"/Users/gmp26/CMEP/CMEP-sources/resources/contributing/lodash.md",
+		"/Users/gmp26/dart/gotit-blockly/.git/MERGE_MSG",
+		"/Users/gmp26/dart/blockly/blockly_uncompressed.js",
+		"/Users/gmp26/dart/gotit-blockly/gotit-ai/gotit-ai.html",
+		"/Users/gmp26/dart/publish.sh",
+		"/Users/gmp26/CMEP/CMEP-site/partials/printables/resources/C5_RT2_1/warmupsolution.printable.log",
+		"/Users/gmp26/CMEP/CMEP-site/partials/printables/resources/E2_RT7_1/solution.printable.tex",
+		"/Users/gmp26/CMEP/CMEP-site/lib/pass2.ls",
+		"/Users/gmp26/CMEP/CMEP-site/lib/generateHtml.ls",
+		"/Users/gmp26/CMEP/CMEP-site/layouts/resource.tex",
+		"/Users/gmp26/CMEP/CMEP-site/lib/generatePrintables.ls",
+		"/Users/gmp26/CMEP/CMEP-site/partials/printables/resources/E2_RT7_1/solution.tex",
+		"/Users/gmp26/CMEP/CMEP-site/layouts/_printablesPreamble.tex",
+		"/Users/gmp26/dart/gotit-blockly/run-control/run-control.css",
+		"/Users/gmp26/CMEP/CMEP-sources/resources/G3_RT6_3/thingsyoumighthavetried.md",
+		"/Users/gmp26/CMEP/CMEP-site/lib/generatePrintables.js",
+		"/Users/gmp26/CMEP/CMEP-site/lib/recursiveLatex.ls",
+		"/Users/gmp26/CMEP/CMEP-site/layouts/resourceWide.tex",
+		"/Users/gmp26/CMEP/CMEP-site/partials/printables/resources/C2_RT6_2/things.tex",
+		"/Users/gmp26/CMEP/CMEP-sources/resources/A4_RT11_3/square-glitch.md",
+		"/Users/gmp26/CMEP/CMEP-site/sources/resources/G1_RT1/index.md",
+		"/Users/gmp26/CMEP/CMEP-site/sources/resources/G1/index.md",
+		"/Users/gmp26/CMEP/CMEP-site/app-sources/styles/main.less",
+		"/Users/gmp26/CMEP/CMEP-sources/examQuestions/Q180/solution.md",
+		"/Users/gmp26/dart/gotit-blockly/blockly-element/blockly/acorn.js",
+		"/Users/gmp26/CMEP/CMEP-site/partials/expanded.yaml",
+		"/Users/gmp26/CMEP/CMEP-sources/resources/G4_RT2_1/index.md",
+		"/private/etc/paths.d/ImageMagick",
+		"/Users/gmp26/CMEP/CMEP-site/.profile"
+	],
+	"find":
+	{
+		"height": 25.0
+	},
+	"find_in_files":
+	{
+		"height": 93.0,
+		"where_history":
+		[
+			"/Users/gmp26/CMEP/CMEP-site/app-sources/ng-modules",
+			"/Users/gmp26/CMEP/CMEP-site/sources/resources",
+			"/Users/gmp26/CMEP/CMEP-site/lib",
+			"/Users/gmp26/react/react-starter",
+			"/Users/gmp26/react/starter-kit/build",
+			"/Users/gmp26/CMEP/CMEP-site/lib",
+			"/Users/gmp26/CMEP/CMEP-editor-source",
+			"/Users/gmp26/CMEP/CMEP-site/layouts",
+			"/Users/gmp26/CMEP/CMEP-site/lib",
+			"/Users/gmp26/CMEP/CMEP-site",
+			"/Users/gmp26/CMEP/new-site/Handlers",
+			"/Users/gmp26/CMEP/new-site",
+			"/Users/gmp26/angular/reactionTimer",
+			"/Users/gmp26/dart/gotit-blockly/gotit-ai",
+			"/Users/gmp26/dart/gotit-blockly",
+			"/Users/gmp26/dart/takers",
+			"/Users/gmp26/CMEP/CMEP-sources",
+			"/Users/gmp26/dart/gotit-blockly",
+			"/Users/gmp26/dart/blockly/generators/javascript",
+			"/Users/gmp26/dart/blockly/core",
+			"/Users/gmp26/dart/blockly/blocks",
+			"/Users/gmp26/dart/blockly/generators",
+			"/Users/gmp26/dart/blockly/blocks",
+			"/Users/gmp26/dart/blockly/core",
+			"/Users/gmp26/dart/blockly",
+			"/Users/gmp26/dart/blockly/core",
+			"/Users/gmp26/dart/gotit-blockly/gotit-split",
+			"/Users/gmp26/dart/gotit-blockly/gotit-ai",
+			"/Users/gmp26/dart/gotit-blockly/gotit-game",
+			"/Users/gmp26/dart/gotit-blockly/game-level",
+			"/Users/gmp26/CMEP/CMEP-site/lib",
+			"/Users/gmp26/dart/gotit-blockly/gotit-ai",
+			"/Users/gmp26/dart/gotit-blockly/game-level",
+			"/Users/gmp26/dart/gotit-blockly",
+			"/Users/gmp26/dart/gotit-blockly/gotit-ai",
+			"/Users/gmp26/dart/gotit-blockly",
+			"/Users/gmp26/CMEP/CMEP-site/lib",
+			"/Users/gmp26/dart/gotit-blockly",
+			"/Users/gmp26/dart/gotit-blockly/blockly-element",
+			"/Users/gmp26/CMEP/CMEP-sources/resources",
+			"/Users/gmp26/CMEP/CMEP-site/partials/printables/resources",
+			"/Users/gmp26/blockly/blocklywc/core",
+			"/Users/gmp26/dart/gotit-blockly/blockly-element/blockly",
+			"/Users/gmp26/dart/gotit-blockly",
+			"/Users/gmp26/CMEP/CMEP-sources/resources",
+			"/Users/gmp26/CMEP/CMEP-site/lib",
+			"/Users/gmp26/CMEP/CMEP-site/partials",
+			"/Users/gmp26/CMEP/CMEP-site/partials/printables",
+			"/Users/gmp26/CMEP/CMEP-site/lib"
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": true,
+		"find_history":
+		[
+			"144",
+			"png",
+			"partials",
+			"copy",
+			"goose",
+			"toggletext",
+			"git",
+			"resources.yaml",
+			"G1_RT8_1",
+			"recent",
+			"noimage",
+			"geogebra",
+			"weight",
+			"getResourceData",
+			"resources",
+			"MainMenu",
+			"Random fail",
+			"deploy",
+			"Alert",
+			"colour",
+			"plist",
+			"4",
+			"Pile",
+			"svg",
+			";;stopFrame;;",
+			";;stopStyle",
+			"frameRepFunc",
+			";;stopFrame;;",
+			"pandoc",
+			"span",
+			"span5",
+			"span",
+			"twoColumn",
+			"multicol",
+			"blockly",
+			"ui-grid-row",
+			"row",
+			"    	rowObj['Mortality %'] = \"\";\n",
+			"font-size",
+			"ui-grid-header",
+			"height",
+			"ui-grid-header",
+			"f3f3f3",
+			"' +",
+			"'",
+			"\\'",
+			"'",
+			"+",
+			"'",
+			"\n",
+			"font",
+			"Math",
+			"copy",
+			"\"\n",
+			"copy",
+			"mathWatch",
+			"math-watch",
+			"Roboto",
+			"brand",
+			"content",
+			"options",
+			"loadStaticFile",
+			"/>",
+			"pre",
+			"Widget",
+			"webmasterName",
+			"resources",
+			"stations",
+			"E1_RT13_CamAssStep_4",
+			"CustomEntity",
+			"database",
+			"eot",
+			"format('eot')",
+			"positioned",
+			"main.html",
+			"end-justified",
+			"</li>\n	<li>",
+			"</p>",
+			"<p>",
+			"endGame",
+			"startMove",
+			"blockly",
+			"custom-toast",
+			"col",
+			"convert",
+			"$         |",
+			"+----------------+",
+			"+--------------+",
+			"      | $",
+			"gotit",
+			"goti",
+			"gotit",
+			"takers",
+			"gotit",
+			"takers",
+			"gotit",
+			"ol ",
+			"ol",
+			"./",
+			"quadratic_formula",
+			"#",
+			".pdf",
+			"NRICH-poster_",
+			"counter",
+			"px",
+			"counter",
+			"counterPos",
+			"animation",
+			"counterPos",
+			"counter",
+			"counterPos",
+			"counter",
+			"chooseMsg",
+			"get chooseMsg",
+			"%",
+			"remainder",
+			"math_number",
+			"paren",
+			"scrub",
+			"blockToCode",
+			"ORDER_",
+			"ORDER",
+			"precedence",
+			"WITH",
+			"with",
+			"STIX",
+			"generatePrintables",
+			"latex"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"pink"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 25.0
+	},
+	"input":
+	{
+		"height": 31.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 304.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"output.haskell_sublime_load":
+	{
+		"height": 100.0
+	},
+	"output.unsaved_changes":
+	{
+		"height": 258.0
+	},
+	"pinned_build_system": "Packages/Jade Build/Jade.sublime-build",
+	"project": "core.sublime-project",
+	"replace":
+	{
+		"height": 46.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 288.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

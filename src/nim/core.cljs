@@ -1,7 +1,8 @@
 (ns ^:figwheel-always nim.core
     (:require [rum :as r]
               [cljs.reader :as reader]
-              [clojure.set :refer [difference]]))
+              [cljsjs.react]
+              ))
 
 (enable-console-print!)
 
@@ -15,7 +16,7 @@
   (str (* x unit) "px"))
 
 ;; debug
-(defn deb [x & msg]
+#_(defn deb [x & msg]
   (do (if msg (println msg x) (println x)) x))
 
 ;;
@@ -112,28 +113,29 @@
    [:p "Click once to choose, and once again in the same place to confirm. Take the very last drip to win the game."]
    [:p "Press 'New Game' to start, you then have 20 seconds to make the first move before
 Al the computer loses patience and starts anyway."]
-   [:button {:on-click start!} "New game"]
-   [:button {:on-click continue!} "OK"]
-   [:p "The 'Pair/Pair again/Separate' button can help you calculate a winning move."]
-   [:button {:on-click pair!} (pair-label)]
+   [:button {:on-click start! :on-touch-start start!} "New game"]
+   [:button {:on-click continue! :on-touch-start continue!} "OK"]
+   [:p "The Pairer button can help you calculate a winning move by rearranging the drips. Each press makes a different arrangement."]
+   [:button {:on-click pair! :on-touch-start pair!} (pair-label)]
    ])
 
 (r/defc well-done < r/reactive []
   [:div
    [:p "Well done."] 
-   [:p "If you understand the winning strategy you should be able to beat Al whenever you like!"]
-   [:p "We'd love to hear your explanation of how to win. Emailwild@maths.org with your thoughts."]
-   [:button {:on-click start!} "New game"]
-   [:button {:on-click continue!} "OK"]
+   [:p "If you understand the winning strategy you should be able to beat Al whenever you like! If not, keep trying till you've pinned it down."]
+   [:p "We'd love to hear your explanation of how to win. Email "
+    [:a {:href "mailto:wild@maths.org"} "wild@maths.org"]
+    " with your thoughts."]
+   [:button {:on-click start! :on-touch-start start!} "New game"]
+   [:button {:on-click continue! :on-touch-start continue!} "OK"]
 ])
 
 (r/defc try-again < r/reactive []
   [:div
    [:p "Bad luck, but try again."]
-   [:p "You may find it helpful to analyse what Al does. Try using the Pair button after he's made a move."]
-   [:p "See if you can work out how he leaves you in a losing position."]
-   [:button {:on-click start!} "New game"]
-   [:button {:on-click continue!} "OK"]
+   [:p "You may find it helpful to study what Al does. Try using the Pairer button after he's made a move to see what's special about the losing positions he leaves you in."]
+   [:button {:on-click start! :on-touch-start start!} "New game"]
+   [:button {:on-click continue! :on-touch-start continue!} "OK"]
 ])
 
 (def messages
@@ -153,16 +155,19 @@ Al the computer loses patience and starts anyway."]
 (defn game-setup []
   "setup or restart the game"
   (let [heaps (apply rand-heaps level-spec)]
-    {:primed nil
-     :heaps heaps
-     :pairing 0
-     :score [2 3]
-     :hovered nil
-     :status :none
-     :flash-key :none
-     :countdown nil
-     :best nil
-}))
+    (do
+      (.initializeTouchEvents js/React true)
+      {
+       :primed nil
+       :heaps heaps
+       :pairing 0
+       :hovered nil
+       :status :none
+       :flash-key :timer
+       :countdown 20
+       :best nil
+       :score [0 0]
+       })))
 
 ;;
 ;; define game as the single? game state atom
@@ -171,6 +176,25 @@ Al the computer loses patience and starts anyway."]
 ;;
 (defonce game
   (atom (game-setup)))
+
+
+;;
+;; I don't see any way to make this reloadable, but at least we
+;; don't have to call it during debug
+;;
+(defn start! []
+  "start a new game"
+  (let [heaps (apply rand-heaps level-spec)]
+    (swap! game #(assoc % 
+     :primed nil
+     :heaps heaps
+     :pairing 0
+     :hovered nil
+     :status :none
+     :best nil
+     :countdown 20 
+     :status :none
+     :flash-key :timer))))
 
 (defn flashes [a-key]
   (condp = a-key 
@@ -265,26 +289,17 @@ Al the computer loses patience and starts anyway."]
     (if (> (count ks) 0)
       (let [k (rand-nth ks)
             n (rand-int (nth heaps k))]
-        [k, n]))))
+        [k, (inc n)]))))
 ;;
 ;; mutate game
 ;;
-(defn start! []
-  "start a new game"
-  (do
-    (swap! game game-setup)
-    (swap! game #(assoc % 
-                   :countdown 20 
-                   :status :none
-                   :flash-key :timer))))
-
 (defn continue! []
   "continue game - hide popover"
   (swap! game #(assoc %
                  :status :none)))
 
 (defn change-level! [event]
-  (.debug js/console (-> event .-target .-value))
+  #_(.debug js/console (-> event .-target .-value))
   (let [new-level (-> event .-target .-value int)]
     (swap! game #(assoc % :level new-level))))
 
@@ -314,7 +329,7 @@ Al the computer loses patience and starts anyway."]
 ;
 (defn at-k-leave-n! [k n]
   (do
-    (println "at " k " leave " n)
+    #_(println "at " k " leave " n)
     (- (nth (:heaps @game) k) (- n 0))))
 
 (defn get-best-move [heaps]
@@ -332,9 +347,11 @@ Al the computer loses patience and starts anyway."]
 (defn show-best-move! []
   "highlight the next best move"
   (let [[k n] (get-best-move (:heaps @game))]
-    (do (prime! k (at-k-leave-n! k n))
-        (println (str "best move" [k n]))
-        [k n])))
+    (if (or (= k nil) (= n nil))
+      [k n]
+      (do (prime! k (at-k-leave-n! k n))
+          #_(println (str "best move" [k n]))
+          [k n]))))
 
 (defn hint! []
   (do
@@ -349,7 +366,7 @@ Al the computer loses patience and starts anyway."]
         new-heaps (heaps-at-k-take-n heaps k n)]
     (do 
       (swap! game #(assoc % :heaps new-heaps))
-      (println "taking " n " from " k))))
+      #_(println "taking " n " from " k))))
 
 (declare show-a-winner!)
 
@@ -405,13 +422,13 @@ Al the computer loses patience and starts anyway."]
 ;;
 
 (defn you-clicked-on [k n]
-  (println (str "you clicked on " k " " n)))
+  (.log js/console (str "you clicked on " k " " n)))
 
 (defn item-clicked [event]
   "read [col row] form from event.target.id string"
   (let [[k n] (reader/read-string (-> event .-target .-id))]
     (do
-      #_(you-clicked-on k n)
+      (you-clicked-on k n)
       (prime-or-delete! k n)
      )))
 
@@ -432,21 +449,8 @@ Al the computer loses patience and starts anyway."]
 ;; rendering
 ;;
 (r/defc debug-game < r/reactive []
-  [:div {:class "debug"} "Game state: " (str (r/react game))])
+  [:div {:class "debug"} (str (r/react game))])
 
-(r/defc render-item < r/reactive [k n]
-  "render item n in kth heap"
-  (let [g @game
-        pairing (:pairing g)
-        heaps (:heaps g)]
-    [:circle {:cx (+ 1 (* 2 k))
-              :cy (item-offset pairing (nth heaps k) n)
-              :r radius
-              :id (str "[" k " " n "]")
-              :fill (if (is-highlighted? k n) "rgba(255,80,100,1)" "rgba(100,150,255,1)")
-              :on-click (fn [e] (item-clicked e))
-              :class "blobs"
-              }]))
 
 (r/defc render-html-item < r/reactive [k n]
   "render item n in kth heap"
@@ -460,6 +464,8 @@ Al the computer loses patience and starts anyway."]
       :class "blobs"
       :key key 
       :on-click (fn [e] (item-clicked e))
+      :on-touch-start (fn [e] (item-clicked e))
+      :on-touch-end (fn [e] (item-out e))
       :on-mouse-over (fn [e] (item-over e))
       :on-mouse-out (fn [e] (item-out e))
       :style 
@@ -470,57 +476,47 @@ Al the computer loses patience and starts anyway."]
        :background-color 
        (if (= (:flash-key g) :als)
          (if (is-highlighted? k n) 
+           "rgba(255, 180, 0, 1)" 
+           "rgba(100, 180, 255, 1)")
+         (if (is-highlighted? k n) 
            "rgba(235, 100, 0, 1)" 
            "rgba(80, 100, 255, 1)")
-         (if (is-highlighted? k n) 
-           "rgba(255, 180, 0, 1)" 
-           "rgba(100, 180, 255, 1)"))
+         )
        }}
      
      ]))
 
-(r/defc render-heap < r/reactive [k n]
-  [:g
-   (map #(render-item k %) (range n))]
-  )
 
 (r/defc render-html-heap < r/reactive [k n]
   [:div {:key (str "heap" k "-" n)}
    (map #(render-html-item k %) (range n))]
   )
 
-(defn draw-heap [k n]
-  (if (> n 0)
-    (render-heap k n)
-))
-
 (defn draw-html-heap [k n]
   (if (> n 0)
     (render-html-heap k n)
 ))
-
-(r/defc render-heaps < r/reactive []
-  [:g (map-indexed draw-heap (:heaps (r/react game)))]
-  )
 
 (r/defc render-html-heaps < r/reactive []
   [:div (map-indexed draw-html-heap (:heaps (r/react game)))]
   )
 
 (defn pair-label []
-  (let [pairing (:pairing @game)
-        pair? (< pairing (max-pairing (:heaps @game)))]
-    (if pair? 
-        (if (= 0 pairing) "Pair" "Pair again") 
-        "Separate")))
+  "Pairer"
+)  
+  ;; (let [pairing (:pairing @game)
+  ;;       pair? (< pairing (max-pairing (:heaps @game)))]
+  ;;   (if pair? 
+  ;;       (if (= 0 pairing) "Pair" "Pair again") 
+  ;;       "Separate")))
 
 (r/defc render-toolbar < r/reactive []
   (let [game-state (r/react game)
         level (:level game-state)] 
     [:div {:class "controls"}
-     [:button {:on-click start!} "New game"]
-     [:button {:on-click hint!} "Rules"]
-     [:button {:on-click pair!} (pair-label)]
+     [:button {:on-click start! :on-touch-start start!} "New game"]
+     [:button {:on-click hint! :on-touch-start hint!} "Rules"]
+     [:button {:on-click pair! :on-touch-start pair!} (pair-label)]
      #_[:select {:on-change change-level! :value level}
       [:option {:value 1} "Level 1"]
       [:option {:value 2} "Level 2"]
@@ -528,15 +524,6 @@ Al the computer loses patience and starts anyway."]
       [:option {:value 4} "Level 4"]
       [:option {:value 5} "Level 5"]
       ]])
-)
-
-(r/defc render-svg-board < r/reactive [gsize]
-  (let [gsz (* 1.8 gsize)]
-    [:div {:class "bordered"}
-     [:svg {:class "playfield"
-            :width gsize :height gsz
-            :viewBox (str "0 0 " gsize " " gsz)}
-      (render-heaps)]])
 )
 
 (defn player-score! []
@@ -583,12 +570,12 @@ Al the computer loses patience and starts anyway."]
 (r/defc render-game < r/reactive []
   [:div
    [:h1 "Drips" ]
-   (debug-game)
    (render-toolbar)
    [:div
     (render-html-board)
     (render-popover)
     ]
+    [:div {:style {:position "relative" :top "540px"}} (debug-game)]
    ]
 )
 
@@ -596,8 +583,7 @@ Al the computer loses patience and starts anyway."]
          (.getElementById js/document "game"))
 
 
-(defn on-js-reload []
-  (.log js/console "on-js-reload called"))
+#_(defn on-js-reload [] (.log js/console "on-js-reload called"))
 
 
 ;; (def key-mapping {38 :up
@@ -615,12 +601,13 @@ Al the computer loses patience and starts anyway."]
 
 
 (defn show-a-winner! []
-  (if (= 0 (count (:heaps @game)))
-    (let [winner (:flash-key @game)
+  (if (and (not= :game-over (:flash-key @game)) (= 0 (reduce + (:heaps @game))))
+    (let [loser (:flash-key @game)
           [yu al] (:score @game)
-          [score status]  (if (= :yours winner)
+          [score status]  (if (= :yours loser)
+                         [[yu (inc al)] :al-won]
                          [[(inc yu) al] :you-won]
-                         [[yu (inc al)] :al-won])]
+                         )]
       (swap! game #(assoc %
                      :status status 
                      :flash-key :game-over
@@ -630,28 +617,32 @@ Al the computer loses patience and starts anyway."]
 (defn tick! []
   (let [timer (:countdown @game)]
     (do
-      (println (str "tick " timer))
-      (if timer
+      (.log js/console "tick")
+      (if (and 
+           (not= :game-over (:flash-key @game)) 
+           timer)
         (do
           (swap! game #(assoc % :countdown (- timer 1)))
           (cond  
-           (= timer 0) (do
-                         (let [[k n] (show-best-move!)]
-                           (if (or (= nil k) (= nil n))
-                             (show-a-winner!)
-                             (do
-                               (println (str "best move is: " [k n]))
-                               (swap! game #(assoc % 
-                                              :flash-key :als
-                                              :best [k n]))))))
-           (= timer -3) (make-best-move! (:best @game))
-           :else (println timer))
-          )))))
+           (= timer 0) (let [[k n] (show-best-move!)]
+                         (do
+                           (.log js/console (str "best move is: " [k n]))
+                           (swap! game #(assoc % 
+                                          :flash-key :als
+                                          :best [k n]))))
+           (= timer -2) (do 
+                          (make-best-move! (:best @game))
+                          (.log js/console (str "heaps = " (:heaps @game)))
+                          (if (= 0 (reduce + (:heaps @game)))
+                            (show-a-winner!)))
+           ))))))
 
 (def one-second 1000)
-  
+
 (defonce tick-watch
-  (js/setInterval tick! one-second))
+  (do
+    (js/setInterval tick! one-second)))
 
 
-(start!)
+
+(game-setup)
