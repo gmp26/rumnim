@@ -113,10 +113,10 @@
    [:p "Click once to choose, and once again in the same place to confirm. Take the very last drip to win the game."]
    [:p "Press 'New Game' to start, you then have 20 seconds to make the first move before
 Al the computer loses patience and starts anyway."]
-   [:button {:on-click start! :on-touch-start start!} "New game"]
-   [:button {:on-click continue! :on-touch-start continue!} "OK"]
+   [:button {:on-click start! :on-touch-end start!} "New game"]
+   [:button {:on-click continue! :on-touch-end continue!} "OK"]
    [:p "The Pairer button can help you calculate a winning move by rearranging the drips. Each press makes a different arrangement."]
-   [:button {:on-click pair! :on-touch-start pair!} (pair-label)]
+   [:button {:on-click pair! :on-touch-end pair!} (pair-label)]
    ])
 
 (r/defc well-done < r/reactive []
@@ -126,16 +126,16 @@ Al the computer loses patience and starts anyway."]
    [:p "We'd love to hear your explanation of how to win. Email "
     [:a {:href "mailto:wild@maths.org"} "wild@maths.org"]
     " with your thoughts."]
-   [:button {:on-click start! :on-touch-start start!} "New game"]
-   [:button {:on-click continue! :on-touch-start continue!} "OK"]
+   [:button {:on-click start! :on-touch-end start!} "New game"]
+   [:button {:on-click continue! :on-touch-end continue!} "OK"]
 ])
 
 (r/defc try-again < r/reactive []
   [:div
    [:p "Bad luck, but try again."]
    [:p "You may find it helpful to study what Al does. Try using the Pairer button after he's made a move to see what's special about the losing positions he leaves you in."]
-   [:button {:on-click start! :on-touch-start start!} "New game"]
-   [:button {:on-click continue! :on-touch-start continue!} "OK"]
+   [:button {:on-click start! :on-touch-end start!} "New game"]
+   [:button {:on-click continue! :on-touch-end continue!} "OK"]
 ])
 
 (def messages
@@ -182,19 +182,21 @@ Al the computer loses patience and starts anyway."]
 ;; I don't see any way to make this reloadable, but at least we
 ;; don't have to call it during debug
 ;;
-(defn start! []
+(defn start! [e]
   "start a new game"
   (let [heaps (apply rand-heaps level-spec)]
-    (swap! game #(assoc % 
-     :primed nil
-     :heaps heaps
-     :pairing 0
-     :hovered nil
-     :status :none
-     :best nil
-     :countdown 20 
-     :status :none
-     :flash-key :timer))))
+    (do
+      (.preventDefault e)
+      (swap! game #(assoc % 
+                     :primed nil
+                     :heaps heaps
+                     :pairing 0
+                     :hovered nil
+                     :status :none
+                     :best nil
+                     :countdown 20 
+                     :status :none
+                     :flash-key :timer)))))
 
 (defn flashes [a-key]
   (condp = a-key 
@@ -293,10 +295,12 @@ Al the computer loses patience and starts anyway."]
 ;;
 ;; mutate game
 ;;
-(defn continue! []
+(defn continue! [e]
   "continue game - hide popover"
-  (swap! game #(assoc %
-                 :status :none)))
+  (do
+    (.preventDefault e)
+    (swap! game #(assoc %
+                   :status :none))))
 
 (defn change-level! [event]
   #_(.debug js/console (-> event .-target .-value))
@@ -408,12 +412,14 @@ Al the computer loses patience and starts anyway."]
 (defn next-pairing [p] 
   (inc p))
 
-(defn pair! []
+(defn pair! [e]
   "pair items together somehow"
   (let [heaps (:heaps @game)
         p (:pairing @game)
         pairing (if (>= p (max-pairing heaps)) 0 (next-pairing p))]
-    (swap! game #(assoc % :pairing pairing))
+    (do
+      (.preventDefault e)
+      (swap! game #(assoc % :pairing pairing)))
     )
 )
 
@@ -428,6 +434,7 @@ Al the computer loses patience and starts anyway."]
   "read [col row] form from event.target.id string"
   (let [[k n] (reader/read-string (-> event .-target .-id))]
     (do
+      (.preventDefault event)
       (you-clicked-on k n)
       (prime-or-delete! k n)
      )))
@@ -436,6 +443,7 @@ Al the computer loses patience and starts anyway."]
   "read [col row] form from event.target.id string"
   (let [[k n] (reader/read-string (-> event .-target .-id))]
     (do
+      (.preventDefault event)
       (mouse-over! k n)
      )))
 
@@ -443,42 +451,40 @@ Al the computer loses patience and starts anyway."]
   "read [col row] form from event.target.id string"
   (let [[k n] (reader/read-string (-> event .-target .-id))]
     (do
+      (.preventDefault event)
       (mouse-out! k n)
      )))
 ;;
 ;; rendering
 ;;
-(r/defc debug-game < r/reactive []
-  [:div {:class "debug"} (str (r/react game))])
+(r/defc debug-game < r/reactive [g]
+  [:div {:class "debug"} (str g)])
 
 
-(r/defc render-html-item < r/reactive [k n]
-  "render item n in kth heap"
+(r/defc render-html-item < r/reactive [pairing k n i]
+  "render item i in kth heap"
   (let [g @game
-        pairing (:pairing g)
-        heaps (:heaps g)
-        key (str "[" k " " n "]")]
+        key (str "[" k " " i "]")]
     [:div 
      
      {:id key
       :class "blobs"
       :key key 
       :on-click (fn [e] (item-clicked e))
-      :on-touch-start (fn [e] (item-clicked e))
-      :on-touch-end (fn [e] (item-out e))
+      :on-touch-end (fn [e] (item-clicked e))
       :on-mouse-over (fn [e] (item-over e))
       :on-mouse-out (fn [e] (item-out e))
       :style 
       {:left (px (+ 0.3 (* 2 k)))
-       :top (px (+ (item-offset pairing (nth heaps k) n) 0.6))
+       :top (px (+ (item-offset pairing n i) 0.6))
        :width (px (* radius 2))
        :height (px (* radius 2))
        :background-color 
        (if (= (:flash-key g) :als)
-         (if (is-highlighted? k n) 
+         (if (is-highlighted? k i) 
            "rgba(255, 180, 0, 1)" 
            "rgba(100, 180, 255, 1)")
-         (if (is-highlighted? k n) 
+         (if (is-highlighted? k i) 
            "rgba(235, 100, 0, 1)" 
            "rgba(80, 100, 255, 1)")
          )
@@ -487,18 +493,18 @@ Al the computer loses patience and starts anyway."]
      ]))
 
 
-(r/defc render-html-heap < r/reactive [k n]
+(r/defc render-html-heap < r/reactive [pairing k n]
   [:div {:key (str "heap" k "-" n)}
-   (map #(render-html-item k %) (range n))]
+   (map #(render-html-item pairing k n %) (range n))]
   )
 
-(defn draw-html-heap [k n]
+(defn draw-html-heap [pairing k n]
   (if (> n 0)
-    (render-html-heap k n)
+    (render-html-heap pairing k n)
 ))
 
-(r/defc render-html-heaps < r/reactive []
-  [:div (map-indexed draw-html-heap (:heaps (r/react game)))]
+(r/defc render-html-heaps < r/reactive [pairing heaps]
+  [:div (map-indexed #(draw-html-heap pairing %1 %2) heaps)]
   )
 
 (defn pair-label []
@@ -514,9 +520,9 @@ Al the computer loses patience and starts anyway."]
   (let [game-state (r/react game)
         level (:level game-state)] 
     [:div {:class "controls"}
-     [:button {:on-click start! :on-touch-start start!} "New game"]
-     [:button {:on-click hint! :on-touch-start hint!} "Rules"]
-     [:button {:on-click pair! :on-touch-start pair!} (pair-label)]
+     [:button {:on-touch-end start!} "New game"]
+     [:button {:on-touch-end hint!} "Rules"]
+     [:button {:on-touch-end pair!} (pair-label)]
      #_[:select {:on-change change-level! :value level}
       [:option {:value 1} "Level 1"]
       [:option {:value 2} "Level 2"]
@@ -541,16 +547,16 @@ Al the computer loses patience and starts anyway."]
      [:span.score "Al: " als " You: " yours]
 ]))
 
-(defn divider-offset [g]
-  (nth [0 61 125 477] (:pairing g)))
+(defn divider-offset [pairing]
+  (nth [0 61 125 477] pairing))
 
-(r/defc render-html-board < r/reactive []
+(r/defc render-html-board < r/reactive [pairing heaps]
   [:div.bordered
-   {:style {:background-position-y (str (divider-offset (r/react game)) "px")}}
+   {:style {:background-position-y (str (divider-offset pairing) "px")}}
    (render-flash)
    [:div.playfield 
     [:div.pad
-     (render-html-heaps)]]])
+     (render-html-heaps pairing heaps)]]])
 
 (r/defc para < r/reactive [text]
   [:p {:class "msg"} text])
@@ -568,15 +574,18 @@ Al the computer loses patience and starts anyway."]
       )))
 
 (r/defc render-game < r/reactive []
-  [:div
-   [:h1 "Drips" ]
-   (render-toolbar)
-   [:div
-    (render-html-board)
-    (render-popover)
-    ]
-    [:div {:style {:position "relative" :top "540px"}} (debug-game)]
-   ]
+  (let [g (r/react game)
+        pairing (:pairing g)
+        heaps (:heaps g)]
+    [:div
+     [:h1 "Drips" ]
+     (render-toolbar)
+     [:div
+      (render-html-board pairing heaps)
+      (render-popover)
+      ]
+     [:div {:style {:position "relative" :top "540px"}} (debug-game g)]
+     ])
 )
 
 (r/mount (render-game)
