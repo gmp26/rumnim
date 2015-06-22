@@ -37,7 +37,7 @@
               :compiler {:output-to "resources/public/js/compiled/build/nim.js"
                          :main nim.core                         
                          :output-dir "resources/public/js/compiled/build"
-                         :optimizations :simple
+                         :optimizations :whitespace
                          :pretty-print false
                          :warnings  {:single-segment-namespace false}}}
 

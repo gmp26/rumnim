@@ -4,7 +4,7 @@
               [cljsjs.react]
               ))
 
-(enable-console-print!)
+#_(enable-console-print!)
 
 (def grid-size 12)
 
@@ -16,8 +16,7 @@
   (str (* x unit) "px"))
 
 ;; debug
-#_(defn deb [x & msg]
-  (do (if msg (println msg x) (println x)) x))
+#_(defn deb [x & msg] (do (if msg (println msg x) (println x)) x))
 
 ;;
 ;; utilities
@@ -226,8 +225,8 @@ Al the computer loses patience and starts anyway."]
                                   (mod  %2 2)
                                   %2)) (grouper n))))
 
-(def i-gp 0.1)
-(def o-gp 1)
+(def i-gp -0.1)
+(def o-gp 1.2)
 
 (defn unwrap [alist] (apply concat alist))
 
@@ -427,15 +426,14 @@ Al the computer loses patience and starts anyway."]
 ;; event handling
 ;;
 
-(defn you-clicked-on [k n]
-  (.log js/console (str "you clicked on " k " " n)))
+#_(defn you-clicked-on [k n] (.log js/console (str "you clicked on " k " " n)))
 
 (defn item-clicked [event]
   "read [col row] form from event.target.id string"
   (let [[k n] (reader/read-string (-> event .-target .-id))]
     (do
       (.preventDefault event)
-      (you-clicked-on k n)
+      #_(you-clicked-on k n)
       (prime-or-delete! k n)
      )))
 
@@ -476,7 +474,7 @@ Al the computer loses patience and starts anyway."]
       :on-mouse-out (fn [e] (item-out e))
       :style 
       {:left (px (+ 0.3 (* 2 k)))
-       :top (px (+ (item-offset pairing n i) 0.6))
+       :top (px (+ (item-offset pairing n i) 0.8))
        :width (px (* radius 2))
        :height (px (* radius 2))
        :background-color 
@@ -520,9 +518,9 @@ Al the computer loses patience and starts anyway."]
   (let [game-state (r/react game)
         level (:level game-state)] 
     [:div {:class "controls"}
-     [:button {:on-touch-end start!} "New game"]
-     [:button {:on-touch-end hint!} "Rules"]
-     [:button {:on-touch-end pair!} (pair-label)]
+     [:button {:on-click start! :on-touch-end start!} "New game"]
+     [:button {:on-click hint! :on-touch-end hint!} "Rules"]
+     [:button {:on-click pair! :on-touch-end pair!} (pair-label)]
      #_[:select {:on-change change-level! :value level}
       [:option {:value 1} "Level 1"]
       [:option {:value 2} "Level 2"]
@@ -548,11 +546,11 @@ Al the computer loses patience and starts anyway."]
 ]))
 
 (defn divider-offset [pairing]
-  (nth [0 61 125 477] pairing))
+  (nth [0 63 132 477] pairing))
 
 (r/defc render-html-board < r/reactive [pairing heaps]
   [:div.bordered
-   {:style {:background-position-y (str (divider-offset pairing) "px")}}
+   {:style {:background-position (str  0 "px " (divider-offset pairing) "px")}}
    (render-flash)
    [:div.playfield 
     [:div.pad
@@ -584,7 +582,7 @@ Al the computer loses patience and starts anyway."]
       (render-html-board pairing heaps)
       (render-popover)
       ]
-     [:div {:style {:position "relative" :top "540px"}} (debug-game g)]
+     #_[:div {:style {:position "relative" :top "540px"}} (debug-game g)]
      ])
 )
 
@@ -626,7 +624,7 @@ Al the computer loses patience and starts anyway."]
 (defn tick! []
   (let [timer (:countdown @game)]
     (do
-      (.log js/console "tick")
+      #_(.log js/console "tick")
       (if (and 
            (not= :game-over (:flash-key @game)) 
            timer)
@@ -635,13 +633,13 @@ Al the computer loses patience and starts anyway."]
           (cond  
            (= timer 0) (let [[k n] (show-best-move!)]
                          (do
-                           (.log js/console (str "best move is: " [k n]))
+                           #_(.log js/console (str "best move is: " [k n]))
                            (swap! game #(assoc % 
                                           :flash-key :als
                                           :best [k n]))))
            (= timer -2) (do 
                           (make-best-move! (:best @game))
-                          (.log js/console (str "heaps = " (:heaps @game)))
+                          #_(.log js/console (str "heaps = " (:heaps @game)))
                           (if (= 0 (reduce + (:heaps @game)))
                             (show-a-winner!)))
            ))))))

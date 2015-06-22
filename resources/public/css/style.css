@@ -45,6 +45,7 @@ h1 {
     -webkit-transform:translate3d(0,0,0);*/
     transition:top ease-in 500ms;
     -webkit-transition:top ease-in 500ms;
+    -moz-transition:top ease-in 500ms;
     cursor: pointer;
 }
 
@@ -90,7 +91,6 @@ div {
 
 .playfield {
     -webkit-filter: url("#goo");
-    -moz-filter: url("#goo");
     -ms-filter: url("#goo");
     position: relative;
     /* -webkit-filter: url("#shadowed-goo"); */
@@ -114,6 +114,10 @@ div {
     margin: 0;
     position: absolute;
 
+    transition:background-position ease-in 500ms;
+    -webkit-transition:background-position ease-in 500ms;
+    -moz-transition:background-position ease-in 500ms;
+
     border: 5px solid rgba(19, 139, 174, 1);
     border-top: 0;
     background-image: url("../assets/trails2.png");
@@ -121,6 +125,7 @@ div {
     background-color: rgba(255,40,40,0.1);
 }
 
+/*
 .noselect {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -129,6 +134,7 @@ div {
     -ms-user-select: none;
     user-select: none;
 }
+*/
 
 .popover {
     border: 1px solid black;
