@@ -4,13 +4,9 @@
               [cljsjs.react]
               ))
 
-#_(enable-console-print!)
+(enable-console-print!)
 
-(def grid-size 12)
-
-(def tick-in-ms 250)
-
-(def unit (identity (/ 300 12)))
+(def unit (Math.round (/ 300 12)))
 
 (defn px [x]
   (str (* x unit) "px"))
@@ -186,6 +182,7 @@ Al the computer loses patience and starts anyway."]
   (let [heaps (apply rand-heaps level-spec)]
     (do
       (.preventDefault e)
+      (.log js/console (str @game))
       (swap! game #(assoc % 
                      :primed nil
                      :heaps heaps
@@ -195,15 +192,16 @@ Al the computer loses patience and starts anyway."]
                      :best nil
                      :countdown 20 
                      :status :none
-                     :flash-key :timer)))))
+                     :flash-key :timer))
+      (.log js/console (str @game))
+)))
 
 (defn flashes [a-key]
   (condp = a-key 
     :none ""
     :als "Al's turn"
     :yours "Your turn"
-    :timer (str "Move or let Al go in " (:countdown @game) " s"
-)
+    :timer (str "Move or let Al go in " (:countdown @game) " s")
     :game-over "Game Over"))
 
 ;;
@@ -327,9 +325,6 @@ Al the computer loses patience and starts anyway."]
   "prime the nth item in heap k"
   (swap! game #(assoc % :primed [k n])))
 
-;
-; problem area starts
-;
 (defn at-k-leave-n! [k n]
   (do
     #_(println "at " k " leave " n)
@@ -395,9 +390,6 @@ Al the computer loses patience and starts anyway."]
                    :pairing 0
                    :primed nil))
     (from-k-take-n! k n)))
-;
-; problem area ends
-;
 
 (defn mouse-out! [k n]
   "mouse-out all"
@@ -421,6 +413,7 @@ Al the computer loses patience and starts anyway."]
       (swap! game #(assoc % :pairing pairing)))
     )
 )
+
 
 ;;
 ;; event handling
@@ -467,7 +460,6 @@ Al the computer loses patience and starts anyway."]
      
      {:id key
       :class "blobs"
-      :key key 
       :on-click (fn [e] (item-clicked e))
       :on-touch-end (fn [e] (item-clicked e))
       :on-mouse-over (fn [e] (item-over e))
@@ -492,13 +484,13 @@ Al the computer loses patience and starts anyway."]
 
 
 (r/defc render-html-heap < r/reactive [pairing k n]
-  [:div {:key (str "heap" k "-" n)}
-   (map #(render-html-item pairing k n %) (range n))]
+  [:div 
+   (map #(r/with-props render-html-item pairing k n % :rum/key (str "h" %)) (range n))]
   )
 
 (defn draw-html-heap [pairing k n]
   (if (> n 0)
-    (render-html-heap pairing k n)
+    (r/with-props render-html-heap pairing k n :rum/key (str "hps" k n))
 ))
 
 (r/defc render-html-heaps < r/reactive [pairing heaps]
@@ -518,16 +510,10 @@ Al the computer loses patience and starts anyway."]
   (let [game-state (r/react game)
         level (:level game-state)] 
     [:div {:class "controls"}
-     [:button {:on-click start! :on-touch-end start!} "New game"]
-     [:button {:on-click hint! :on-touch-end hint!} "Rules"]
-     [:button {:on-click pair! :on-touch-end pair!} (pair-label)]
-     #_[:select {:on-change change-level! :value level}
-      [:option {:value 1} "Level 1"]
-      [:option {:value 2} "Level 2"]
-      [:option {:value 3} "Level 3"]
-      [:option {:value 4} "Level 4"]
-      [:option {:value 5} "Level 5"]
-      ]])
+     [:button {:key "stb" :on-click start! :on-touch-end start!} "New game"]
+     [:button {:key "htb" :on-click hint! :on-touch-end hint!} "Rules"]
+     [:button {:key "prb" :on-click pair! :on-touch-end pair!} (pair-label)]
+])
 )
 
 (defn player-score! []
@@ -536,23 +522,21 @@ Al the computer loses patience and starts anyway."]
 (defn computer-score! []
   (nth (:score @game) 1))
 
-(r/defc render-flash < r/reactive []
-  (let [g (r/react game)
-        flash-msg  (flashes (:flash-key g))
-        [yours als] (:score g)]
+(r/defc render-flash < r/reactive [flash-msg score]
+  (let [[als yours] score] 
     [:div.flash-box
-     [:span.msg flash-msg]
-     [:span.score "Al: " als " You: " yours]
-]))
+     [:span.msg {:key "f1"} flash-msg]
+     [:span.score {:key "f2"} "Al: " als " You: " yours]
+     ]))
 
 (defn divider-offset [pairing]
   (nth [0 63 132 477] pairing))
 
-(r/defc render-html-board < r/reactive [pairing heaps]
+(r/defc render-html-board < r/reactive [pairing heaps flash-msg score]
   [:div.bordered
    {:style {:background-position (str  0 "px " (divider-offset pairing) "px")}}
-   (render-flash)
-   [:div.playfield 
+   (render-flash flash-msg score)
+   [:div.playfield  
     [:div.pad
      (render-html-heaps pairing heaps)]]])
 
@@ -574,20 +558,22 @@ Al the computer loses patience and starts anyway."]
 (r/defc render-game < r/reactive []
   (let [g (r/react game)
         pairing (:pairing g)
-        heaps (:heaps g)]
+        heaps (:heaps g)
+        flash-msg (flashes (:flash-key g))
+        score (:score g)]
     [:div
-     [:h1 "Drips" ]
-     (render-toolbar)
-     [:div
-      (render-html-board pairing heaps)
-      (render-popover)
+     [:h1 {:key "g1"} "Drips" ]
+     (r/with-props render-toolbar :rum/key "toolbar")
+     [:div {:key "g2"}
+      (r/with-props render-html-board pairing heaps flash-msg score :rum/key "board")
+      (r/with-props render-popover :rum/key "popup")
       ]
-     #_[:div {:style {:position "relative" :top "540px"}} (debug-game g)]
      ])
 )
 
 (r/mount (render-game)
          (.getElementById js/document "game"))
+
 
 
 #_(defn on-js-reload [] (.log js/console "on-js-reload called"))
@@ -649,7 +635,5 @@ Al the computer loses patience and starts anyway."]
 (defonce tick-watch
   (do
     (js/setInterval tick! one-second)))
-
-
 
 (game-setup)

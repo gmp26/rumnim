@@ -4,10 +4,10 @@
   :license {:name "MIT"
             :url "http://opensource.org/licenses/MIT"}
 
-  :dependencies [[org.clojure/clojure "1.7.0-RC1"]
-                 [org.clojure/clojurescript "0.0-3308"]
+  :dependencies [[org.clojure/clojure "1.6.0"]
+                 [org.clojure/clojurescript "0.0-3211"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
-                 [rum "0.2.7"]]
+                 [rum "0.2.6"]]
 
   :plugins [[lein-cljsbuild "1.0.5"]
             [lein-figwheel "0.3.3"]]
@@ -36,7 +36,7 @@
               :source-paths ["src"]
               :compiler {:output-to "resources/public/js/compiled/build/nim.js"
                          :main nim.core                         
-                         :output-dir "resources/public/js/compiled/build"
+                         :output-dir "resources/public/js/compiled/build/"
                          :optimizations :whitespace
                          :pretty-print false
                          :warnings  {:single-segment-namespace false}}}
