@@ -2,9 +2,16 @@
     (:require [rum :as r]
               [cljs.reader :as reader]
               [cljsjs.react]
+              [secretary.core :as secretary :refer-macros [defroute]]
               ))
 
 (enable-console-print!)
+
+;;
+;; routing
+;;
+(defroute "/users/:id" {:as query-params}
+  (js/console.log (pr-str query-params)))
 
 (def unit (Math.round (/ 300 12)))
 
@@ -182,7 +189,6 @@ Al the computer loses patience and starts anyway."]
   (let [heaps (apply rand-heaps level-spec)]
     (do
       (.preventDefault e)
-      (.log js/console (str @game))
       (swap! game #(assoc % 
                      :primed nil
                      :heaps heaps
@@ -193,7 +199,6 @@ Al the computer loses patience and starts anyway."]
                      :countdown 20 
                      :status :none
                      :flash-key :timer))
-      (.log js/console (str @game))
 )))
 
 (defn flashes [a-key]
@@ -300,7 +305,6 @@ Al the computer loses patience and starts anyway."]
                    :status :none))))
 
 (defn change-level! [event]
-  #_(.debug js/console (-> event .-target .-value))
   (let [new-level (-> event .-target .-value int)]
     (swap! game #(assoc % :level new-level))))
 
@@ -352,12 +356,10 @@ Al the computer loses patience and starts anyway."]
           [k n]))))
 
 (defn hint! []
-  (do
-    (swap! game #(assoc % 
-                   :status :instructions
-                   :countdown nil
-                   :flash-key :none
-                   ))))
+  (if (= (:status @game) :instructions)
+    (swap! game #(assoc % :status :none ))
+    (swap! game #(assoc % :status :instructions))
+    ))
 
 (defn from-k-take-n! [k n]
   (let [heaps (:heaps @game)
@@ -397,8 +399,9 @@ Al the computer loses patience and starts anyway."]
 
 (defn mouse-over! [k n]
   "hover over the nth item in heap k"
-  (if (= (:flash-key @game) :yours)
-    (swap! game #(assoc % :hovered [k n]))))
+  (let [fkey (:flash-key @game)]
+    (if (or (= fkey :yours) (= fkey :timer))
+      (swap! game #(assoc % :hovered [k n])))))
 
 (defn next-pairing [p] 
   (inc p))
@@ -579,20 +582,6 @@ Al the computer loses patience and starts anyway."]
 #_(defn on-js-reload [] (.log js/console "on-js-reload called"))
 
 
-;; (def key-mapping {38 :up
-;;                   40 :down
-;;                   37 :left
-;;                   39 :right
-;;                   80 :pause
-;;                   82 :restart })
-
-
-;; (defonce key-watch
-;;   (.addEventListener js/document "keydown"
-;;                      #(when-let [cmd (get key-mapping (.-keyCode %))]
-;;                         (handle-command! cmd))))
-
-
 (defn show-a-winner! []
   (if (and (not= :game-over (:flash-key @game)) (= 0 (reduce + (:heaps @game))))
     (let [loser (:flash-key @game)
@@ -608,32 +597,30 @@ Al the computer loses patience and starts anyway."]
 
 
 (defn tick! []
-  (let [timer (:countdown @game)]
-    (do
-      #_(.log js/console "tick")
-      (if (and 
-           (not= :game-over (:flash-key @game)) 
-           timer)
-        (do
-          (swap! game #(assoc % :countdown (- timer 1)))
-          (cond  
-           (= timer 0) (let [[k n] (show-best-move!)]
-                         (do
-                           #_(.log js/console (str "best move is: " [k n]))
-                           (swap! game #(assoc % 
-                                          :flash-key :als
-                                          :best [k n]))))
-           (= timer -2) (do 
-                          (make-best-move! (:best @game))
-                          #_(.log js/console (str "heaps = " (:heaps @game)))
-                          (if (= 0 (reduce + (:heaps @game)))
-                            (show-a-winner!)))
-           ))))))
+  (let [g @game
+        timer (:countdown g)]
+    (if (and 
+         (not= :game-over (:flash-key g)) 
+         timer)
+      (cond  
+       (= timer 0) (let [[k n] (show-best-move!)]
+                     (swap! game #(assoc %
+                                    :countdown (- timer 1)
+                                    :flash-key :als
+                                    :best [k n])))
+       (= timer -2) (do 
+                      (make-best-move! (:best @game))
+                      (if (= 0 (reduce + (:heaps @game)))
+                        (show-a-winner!))
+                      )
+       :else (swap! game #(assoc % :countdown (- timer 1)))
+       ))))
 
 (def one-second 1000)
 
 (defonce tick-watch
-  (do
-    (js/setInterval tick! one-second)))
+  (js/setInterval tick! one-second))
 
 (game-setup)
+
+

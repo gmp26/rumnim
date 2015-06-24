@@ -7,7 +7,8 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/clojurescript "0.0-3211"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
-                 [rum "0.2.6"]]
+                 [rum "0.2.6"]
+                 [secretary "1.2.3"]]
 
   :plugins [[lein-cljsbuild "1.0.5"]
             [lein-figwheel "0.3.3"]]
@@ -47,7 +48,7 @@
                          :main nim.core                         
                          :output-dir "resources/public/js/compiled/debug"
                          :asset-path "js/compiled/debug"
-                         :optimizations :whitespace
+                         :optimizations :advanced
                          :pretty-print false
                          :warnings  {:single-segment-namespace false}}}]}
 

@@ -90,8 +90,9 @@ div {
 }
 
 .playfield {
-    -webkit-filter: url("#goo");
+/*    -webkit-filter: url("#goo");
     -ms-filter: url("#goo");
+*/
     position: relative;
     /* -webkit-filter: url("#shadowed-goo"); */
     /* -moz-filter: url("#shadowed-goo"); */
