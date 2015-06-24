@@ -10,8 +10,10 @@
 ;;
 ;; routing
 ;;
-(defroute "/users/:id" {:as query-params}
-  (js/console.log (pr-str query-params)))
+(defroute "/users/:id" [id query-params]
+  (js/console.log (str "User: " id))
+  (js/console.log (pr-str query-params))
+)
 
 (def unit (Math.round (/ 300 12)))
 
