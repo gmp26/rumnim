@@ -5,23 +5,60 @@
               [goog.events :as events]
               [goog.history.EventType :as EventType]
               [secretary.core :as secretary :refer-macros [defroute]]
+              [clojure.string :as str]
               )
     (:import goog.History))
 
 (enable-console-print!)
 
 ;;
-;; basic routing to configure game options
+;; define level-spec as an atom for game level configuration
 ;;
+(def level-spec
+  (atom [2 6 1 15]))
+
+(declare game-init)
+
+(prn (.-href js/location))
+
+
+;;
+;; basic hashbang routing to configure some game options
+;;
+
 (secretary/set-config! :prefix "#")
 
-(defroute "/users/:id" [id query-params]
-  (js/console.log (str "User: " id))
-  (js/console.log (pr-str query-params))
-)
+;;
+;; TODO: better parameter validation
+;;
+(defroute 
+  "/heaps/:heaps/height/:height" {:as params}
+  (do
+    (swap! level-spec (fn [cur x y] [2 (int x) 1 (int y)])
+             (:heaps params)
+             (:height params))
+    (js/console.log (str (:heaps params) ":" (:height params)))))
+
+(defroute 
+  "/levels/:x/:x/:x/:x" {:as params}
+  (do
+    (let [read-levels #(map int (flatten %))]
+      (swap! level-spec (fn [cur levels] (read-levels levels)) (:x params))
+      (js/console.log (str "levels" (read-levels (:x params)))))))
+
 
 ;; Quick and dirty history configuration.
-(let [h (History.)]
+;;
+;; The invisible element "dummy" is needed to make goog.History reloadable by
+;; figwheel. Without it we see
+;; Failed to execute 'write' on 'Document': 
+;; It isn't possible to write into a document from an
+;; asynchronously-loaded external script unless it is explicitly 
+;;
+;; Note that this history handling must happen after route definitions for it
+;; to kick in on initial page load.
+;;
+(let [h (History. false false "dummy")]
   (goog.events/listen h EventType/NAVIGATE #(secretary/dispatch! (.-token %)))
   (doto h (.setEnabled true)))
 
@@ -67,54 +104,6 @@
 (defn max-pairing [heaps]
   (msb (apply max heaps))
   )
-
-;;
-;; rounds and levels
-;;
-(def level2-heaps [
-                   [1 0]
-                   [1 1]
-                   [2 1]
-                   [2 2]
-                   [4 2]
-                   [3 8]
-                   [4 5]
-                   [12 1]
-                   ])
-
-(def level3-heaps [
-                   [1]
-                   [1 1 1]
-                   [1 1 1 1]
-                   [1 1 1 1 1 1 1]
-                   [1 1 1 1 1 1 1 1 1 1]
-                   ])
-
-(defn lookup-heaps [heap-table round] 
-  (if (contains? heap-table round) (nth heap-table round) nil))
-
-(defn make-heaps [level round]
-  "make heaps for given round and level. Return round level and heaps "
-  (loop [level level
-         round round]
-
-    (let [result (cond 
-                  (= 1 level) (rand-heaps 1 1 1 10)
-                  (= 2 level) (lookup-heaps level2-heaps round)
-                  (= 3 level) (lookup-heaps level3-heaps round)
-                  (= 4 level) (rand-heaps 3 3 1 2)
-                  (= 5 level) (rand-heaps 3 3 1 4)
-                  (= 6 level) (rand-heaps 3 3 1 8)
-                  (= 7 level) (rand-heaps 3 3 1 16)
-                  :else (rand-heaps 1 6 1 12))]
-      
-      (if (not= nil result)
-        {:heaps result :level level :round round}
-        (recur (inc level) 0)))))
-
-
-(def level-spec 
-  [2 6 1 15])
 
 (declare start!)
 (declare continue!)
@@ -166,9 +155,9 @@ Al the computer loses patience and starts anyway."]
             :body try-again}
    })
 
-(defn game-setup []
+(defn game-setup [new-level-spec]
   "setup or restart the game"
-  (let [heaps (apply rand-heaps level-spec)]
+  (let [heaps (apply rand-heaps new-level-spec)]
     (do
       (.initializeTouchEvents js/React true)
       {
@@ -183,14 +172,18 @@ Al the computer loses patience and starts anyway."]
        :score [0 0]
        })))
 
+
+(def game (atom (game-setup @level-spec)))
+
 ;;
 ;; define game as the single? game state atom
 ;;
 ;; TODO: change to defonce
 ;;
-(defonce game
-  (atom (game-setup)))
-
+(defn game-init [key levels old-levels new-level-spec]
+  (do
+    (prn "reset")
+    (reset! game (game-setup new-level-spec))))
 
 ;;
 ;; I don't see any way to make this reloadable, but at least we
@@ -198,7 +191,7 @@ Al the computer loses patience and starts anyway."]
 ;;
 (defn start! [e]
   "start a new game"
-  (let [heaps (apply rand-heaps level-spec)]
+  (let [heaps (apply rand-heaps @level-spec)]
     (do
       (.preventDefault e)
       (swap! game #(assoc % 
@@ -589,8 +582,6 @@ Al the computer loses patience and starts anyway."]
 (r/mount (render-game)
          (.getElementById js/document "game"))
 
-
-
 #_(defn on-js-reload [] (.log js/console "on-js-reload called"))
 
 
@@ -620,7 +611,7 @@ Al the computer loses patience and starts anyway."]
                                     :countdown (- timer 1)
                                     :flash-key :als
                                     :best [k n])))
-       (= timer -2) (do 
+       (= timer -4) (do 
                       (make-best-move! (:best @game))
                       (if (= 0 (reduce + (:heaps @game)))
                         (show-a-winner!))
@@ -633,6 +624,5 @@ Al the computer loses patience and starts anyway."]
 (defonce tick-watch
   (js/setInterval tick! one-second))
 
-(game-setup)
 
-
+(add-watch level-spec "akey" game-init)
