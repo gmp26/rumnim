@@ -47,7 +47,7 @@
       (js/console.log (str "levels" (read-levels (:x params)))))))
 
 
-;; Quick and dirty history configuration.
+;; history configuration.
 ;;
 ;; The invisible element "dummy" is needed to make goog.History reloadable by
 ;; figwheel. Without it we see
