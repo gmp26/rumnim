@@ -2,18 +2,28 @@
     (:require [rum :as r]
               [cljs.reader :as reader]
               [cljsjs.react]
+              [goog.events :as events]
+              [goog.history.EventType :as EventType]
               [secretary.core :as secretary :refer-macros [defroute]]
-              ))
+              )
+    (:import goog.History))
 
 (enable-console-print!)
 
 ;;
-;; routing
+;; basic routing to configure game options
 ;;
+(secretary/set-config! :prefix "#")
+
 (defroute "/users/:id" [id query-params]
   (js/console.log (str "User: " id))
   (js/console.log (pr-str query-params))
 )
+
+;; Quick and dirty history configuration.
+(let [h (History.)]
+  (goog.events/listen h EventType/NAVIGATE #(secretary/dispatch! (.-token %)))
+  (doto h (.setEnabled true)))
 
 (def unit (Math.round (/ 300 12)))
 
@@ -113,33 +123,33 @@
 
 (r/defc instructions < r/reactive [] 
   [:div
-   [:p "Take turns to remove as many drips as you like from a single drip trail."]
-   [:p "Click once to choose, and once again in the same place to confirm. Take the very last drip to win the game."]
-   [:p "Press 'New Game' to start, you then have 20 seconds to make the first move before
+   [:p {:key "i1"} "Take turns to remove as many drips as you like from a single drip trail."]
+   [:p {:key "i2"} "Click once to choose, and once again in the same place to confirm. Take the very last drip to win the game."]
+   [:p {:key "i3"} "Press 'New Game' to start, you then have 20 seconds to make the first move before
 Al the computer loses patience and starts anyway."]
-   [:button {:on-click start! :on-touch-end start!} "New game"]
-   [:button {:on-click continue! :on-touch-end continue!} "OK"]
-   [:p "The Pairer button can help you calculate a winning move by rearranging the drips. Each press makes a different arrangement."]
-   [:button {:on-click pair! :on-touch-end pair!} (pair-label)]
+   [:button {:on-click start! :on-touch-end start! :key "i4" } "New game"]
+   [:button {:on-click continue! :on-touch-end continue! :key "i5" } "OK"]
+   [:p {:key "i6"} "The Pairer button can help you calculate a winning move by rearranging the drips. Each press makes a different arrangement."]
+   [:button {:on-click pair! :on-touch-end pair! :key "i7" } (pair-label)]
    ])
 
 (r/defc well-done < r/reactive []
   [:div
-   [:p "Well done."] 
-   [:p "If you understand the winning strategy you should be able to beat Al whenever you like! If not, keep trying till you've pinned it down."]
-   [:p "We'd love to hear your explanation of how to win. Email "
+   [:p {:key "i1"} "Well done."] 
+   [:p {:key "i2"} "If you understand the winning strategy you should be able to beat Al whenever you like! If not, keep trying till you've pinned it down."]
+   [:p {:key "i3"} "We'd love to hear your explanation of how to win. Email "
     [:a {:href "mailto:wild@maths.org"} "wild@maths.org"]
     " with your thoughts."]
-   [:button {:on-click start! :on-touch-end start!} "New game"]
-   [:button {:on-click continue! :on-touch-end continue!} "OK"]
+   [:button {:on-click start! :on-touch-end start! :key "i4" } "New game"]
+   [:button {:on-click continue! :on-touch-end continue! :key "i5" } "OK"]
 ])
 
 (r/defc try-again < r/reactive []
   [:div
-   [:p "Bad luck, but try again."]
-   [:p "You may find it helpful to study what Al does. Try using the Pairer button after he's made a move to see what's special about the losing positions he leaves you in."]
-   [:button {:on-click start! :on-touch-end start!} "New game"]
-   [:button {:on-click continue! :on-touch-end continue!} "OK"]
+   [:p {:key "i1"} "Bad luck, but try again."]
+   [:p {:key "i2"} "You may find it helpful to study what Al does. Try using the Pairer button after he's made a move to see what's special about the losing positions he leaves you in."]
+   [:button {:on-click start! :on-touch-end start! :key "i3" } "New game"]
+   [:button {:on-click continue! :on-touch-end continue! :key "i4" } "OK"]
 ])
 
 (def messages
@@ -556,8 +566,8 @@ Al the computer loses patience and starts anyway."]
         body (:body status)]
     (if visible
       [:div {:class "popover" :key "popover"}
-       [:div {:class "title"} title]
-       (body {:key "body"})]
+       [:div {:class "title" :key "title"} title]
+       (r/with-props body :rum/key "body")]
       )))
 
 (r/defc render-game < r/reactive []
