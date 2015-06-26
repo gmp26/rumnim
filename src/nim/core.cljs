@@ -19,8 +19,6 @@
 
 (declare game-init)
 
-(prn (.-href js/location))
-
 
 ;;
 ;; basic hashbang routing to configure some game options
@@ -29,7 +27,7 @@
 (secretary/set-config! :prefix "#")
 
 ;;
-;; TODO: better parameter validation
+;; TODO: parameter validation
 ;;
 (defroute 
   "/heaps/:heaps/height/:height" {:as params}
@@ -187,11 +185,13 @@ Al the computer loses patience and starts anyway."]
  (fn [_ _ _ new-state]
    (let [last-state (last @game-history)] 
      (if (and (not (:playback new-state)) 
-              (not= (:heaps last-state) (:heaps  new-state))
-              (not= (:primed last-state) (:primed  new-state))
-              (not= (:pairing last-state) (:pairing  new-state))
+              (or (not= (:heaps last-state) (:heaps  new-state))
+                  (not= (:primed last-state) (:primed  new-state))
+                  (not= (:pairing last-state) (:pairing  new-state)))
               )
-       (swap! game-history conj new-state)))))
+       (swap! game-history conj 
+              (assoc new-state :play-head
+                     (inc (count @game-history))))))))
 
 ;;
 ;; define game as the single? game state atom
@@ -232,12 +232,17 @@ Al the computer loses patience and starts anyway."]
     (.preventDefault e)
     (.log js/console "undo count=" (count @game-history))
     (.log js/console "value=" (-> e .-target .-value))
-    (let [gh (@game-history)
+    (let [gh @game-history
           ghc (count gh)
-          slider (-> e .-target .-value)]
-      (when (and (> ghc 0)
-                 (< ghc slider))
-        (reset! game (nth gh slider))))))
+          slider (int (-> e .-target .-value))]
+      (if (and (> ghc 0)
+                 (< slider ghc))
+        (let [nth-state (nth gh slider)] 
+          (swap! game #(assoc %
+                         :heaps (:heaps nth-state)
+                         :pairing (:pairing nth-state)
+                         :primed (:primed nth-state)
+                         :playhead slider)))))))
 
 (defn playback! [e]
   (do
@@ -245,9 +250,11 @@ Al the computer loses patience and starts anyway."]
     (.debug js/console (.-target e))
     (.debug js/console (-> e .-target .-value))
     (if (:playback @game)
-      (swap! game #(assoc %
-                     :flash-key (:playback @game)
-                     :playback false))
+      (do
+        (swap! game #(assoc %
+                       :flash-key (:playback @game)
+                       :playback false))
+        (reset! game (last @game-history)))
       (swap! game #(assoc %
                      :flash-key :playback
                      :playback (:flash-key @game)))
@@ -625,6 +632,7 @@ Al the computer loses patience and starts anyway."]
        [:input {:id "slider" :key "inp"
                 :type "range"
                 :min 0
+                :value (:playhead @game)
                 :max (count @game-history)
                 :on-change show-frame!}])
 ])
@@ -668,9 +676,11 @@ Al the computer loses patience and starts anyway."]
 
 (defn tick! []
   (let [g @game
+        fk (:flash-key g)
         timer (:countdown g)]
-    (if (and 
-         (not= :game-over (:flash-key g)) 
+    (if (and
+         (not= fk :playback)
+         (not= fk :game-over) 
          timer)
       (cond  
        (= timer 0) (let [[k n] (show-best-move!)]
