@@ -11,6 +11,14 @@
 
 (enable-console-print!)
 
+
+;; Things to sort out:
+;; Playhead is inconsistent
+;; Need to retain player info in history
+;; Forward and back buttons might be better (Undo and Redo?)
+
+
+
 ;;
 ;; define level-spec as an atom for game level configuration
 ;;
