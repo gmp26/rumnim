@@ -31,6 +31,43 @@ h1 {
    font-weight: bold;
 }
 
+.board {
+    height:524px;
+}
+
+.footer {
+    display: inline;
+    padding: 0px 0px 0px 0px;
+    margin: 0 0 0 0;
+    max-width: 300px;
+}
+
+.footer button {
+    display: inline;
+    background-color: #5C6F8B;
+}
+
+.footer button.playback {
+    background-color: rgb(0, 158, 0);
+}
+
+.footer button:active {
+    background-color: auto;
+}
+
+.footer button:hover {
+    background-color: rgb(0, 95, 0);
+}
+
+.footer input {
+    width: 210px;
+}
+
+.footer * {
+    /* font-size: 11px;             */
+    /* font-weight: bold; */
+}
+
 .blobs {
     position: absolute;
     -ms-border-radius:100%;
@@ -56,27 +93,15 @@ h1 {
 
 button {
     color: white;
-    background: rgb(227, 103, 0);
+    background: rgb(227, 0, 77);
     border: 1px solid black;
     padding: 1ex 1em;
     margin-right: 1ex;
     tab-index: 0;
     touch-action: manipulation;  /* switches off click-delay in ms touch */
 }
-button:hover {
+.controls button:hover {
     background: red;
-}
-
-select {
-    color: white;
-    background: grey;
-    border: 1px solid black;
-    padding: 1ex 1em;
-    height: 26px;
-    margin-right: 1ex;
-}
-select:hover {
-    background: blue;
 }
 
 div {
@@ -126,7 +151,6 @@ div {
     background-color: rgba(255,40,40,0.1);
 }
 
-/*
 .noselect {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -135,7 +159,7 @@ div {
     -ms-user-select: none;
     user-select: none;
 }
-*/
+
 
 .popover {
     border: 1px solid black;

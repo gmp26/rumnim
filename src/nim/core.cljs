@@ -170,10 +170,28 @@ Al the computer loses patience and starts anyway."]
        :countdown 20
        :best nil
        :score [0 0]
+       :playback false
+       :playhead 0
        })))
 
-
 (def game (atom (game-setup @level-spec)))
+
+;;
+;; Don't confuse with browser history! This records the history of
+;; heap state since the last new game by listening on game atom mutations
+;;
+(def game-history (atom [@game]))
+
+(add-watch 
+ game :history
+ (fn [_ _ _ new-state]
+   (let [last-state (last @game-history)] 
+     (if (and (not (:playback new-state)) 
+              (not= (:heaps last-state) (:heaps  new-state))
+              (not= (:primed last-state) (:primed  new-state))
+              (not= (:pairing last-state) (:pairing  new-state))
+              )
+       (swap! game-history conj new-state)))))
 
 ;;
 ;; define game as the single? game state atom
@@ -203,8 +221,42 @@ Al the computer loses patience and starts anyway."]
                      :best nil
                      :countdown 20 
                      :status :none
-                     :flash-key :timer))
+                     :flash-key :timer
+                     :playback false
+                     :playhead 0))
+      (reset! game-history [@game])
 )))
+
+(defn show-frame! [e]
+  (do
+    (.preventDefault e)
+    (.log js/console "undo count=" (count @game-history))
+    (.log js/console "value=" (-> e .-target .-value))
+    (let [gh (@game-history)
+          ghc (count gh)
+          slider (-> e .-target .-value)]
+      (when (and (> ghc 0)
+                 (< ghc slider))
+        (reset! game (nth gh slider))))))
+
+(defn playback! [e]
+  (do
+    (.preventDefault e)
+    (.debug js/console (.-target e))
+    (.debug js/console (-> e .-target .-value))
+    (if (:playback @game)
+      (swap! game #(assoc %
+                     :flash-key (:playback @game)
+                     :playback false))
+      (swap! game #(assoc %
+                     :flash-key :playback
+                     :playback (:flash-key @game)))
+
+      )))
+
+(defn playback []
+  "Playback class"
+  (if (:playback @game) "playback" ""))
 
 (defn flashes [a-key]
   (condp = a-key 
@@ -212,7 +264,8 @@ Al the computer loses patience and starts anyway."]
     :als "Al's turn"
     :yours "Your turn"
     :timer (str "Move or let Al go in " (:countdown @game) " s")
-    :game-over "Game Over"))
+    :game-over "Game Over"
+    :playback "Playback"))
 
 ;;
 ;; layout
@@ -563,6 +616,20 @@ Al the computer loses patience and starts anyway."]
        (r/with-props body :rum/key "body")]
       )))
 
+(r/defc render-footer < r/reactive []
+  (let [game-state (r/react game)
+        level (:level game-state)] 
+    [:div {:class "footer"}
+     [:button {:key "plb" :on-click playback! :on-touch-end playback! :class (playback)} "Playback"]
+     (if (:playback @game)
+       [:input {:id "slider" :key "inp"
+                :type "range"
+                :min 0
+                :max (count @game-history)
+                :on-change show-frame!}])
+])
+)
+
 (r/defc render-game < r/reactive []
   (let [g (r/react game)
         pairing (:pairing g)
@@ -572,10 +639,11 @@ Al the computer loses patience and starts anyway."]
     [:div
      [:h1 {:key "g1"} "Drips" ]
      (r/with-props render-toolbar :rum/key "toolbar")
-     [:div {:key "g2"}
+     [:div {:key "g2" :class "board"}
       (r/with-props render-html-board pairing heaps flash-msg score :rum/key "board")
       (r/with-props render-popover :rum/key "popup")
       ]
+     (r/with-props render-footer :rum/key "footer")
      ])
 )
 
@@ -597,7 +665,6 @@ Al the computer loses patience and starts anyway."]
                      :status status 
                      :flash-key :game-over
                      :score score)))))
-
 
 (defn tick! []
   (let [g @game
@@ -623,6 +690,5 @@ Al the computer loses patience and starts anyway."]
 
 (defonce tick-watch
   (js/setInterval tick! one-second))
-
 
 (add-watch level-spec "akey" game-init)
