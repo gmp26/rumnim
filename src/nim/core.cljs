@@ -637,12 +637,15 @@ Al the computer loses patience and starts anyway."]
     [:div {:class "footer"}
      [:button {:key "plb" :on-click playback! :on-touch-end playback! :class (playback)} "Playback"]
      (if (:playback @game)
-       [:input {:id "slider" :key "inp"
-                :type "range"
-                :min 0
-                :value (:playhead @game)
-                :max (count @game-history)
-                :on-change show-frame!}])
+       (do [:div [:button [:i
+                           {:class "fa fa-camera-retro"}]
+                  ]
+            [:input {:id "slider" :key "inp"
+                     :type "range"
+                     :min 0
+                     :value (:playhead @game)
+                     :max (count @game-history)
+                     :on-change show-frame!}]]))
 ])
 )
 
