@@ -2,12 +2,9 @@
     (:require [rum :as r]
               [cljs.reader :as reader]
               [cljsjs.react]
-              [goog.events :as events]
-              [goog.history.EventType :as EventType]
-              [secretary.core :as secretary :refer-macros [defroute]]
-              [clojure.string :as str]
+              [routing.core :as routing]
               )
-    (:import goog.History))
+)
 
 (enable-console-print!)
 
@@ -18,55 +15,7 @@
 ;; Forward and back buttons might be better (Undo and Redo?)
 
 
-
-;;
-;; define level-spec as an atom for game level configuration
-;;
-(def level-spec
-  (atom [2 6 1 15]))
-
 (declare game-init)
-
-
-;;
-;; basic hashbang routing to configure some game options
-;;
-
-(secretary/set-config! :prefix "#")
-
-;;
-;; TODO: parameter validation
-;;
-(defroute 
-  "/heaps/:heaps/height/:height" {:as params}
-  (do
-    (swap! level-spec (fn [cur x y] [2 (int x) 1 (int y)])
-             (:heaps params)
-             (:height params))
-    (js/console.log (str (:heaps params) ":" (:height params)))))
-
-(defroute 
-  "/levels/:x/:x/:x/:x" {:as params}
-  (do
-    (let [read-levels #(map int (flatten %))]
-      (swap! level-spec (fn [cur levels] (read-levels levels)) (:x params))
-      (js/console.log (str "levels" (read-levels (:x params)))))))
-
-
-;; history configuration.
-;;
-;; The invisible element "dummy" is needed to make goog.History reloadable by
-;; figwheel. Without it we see
-;; Failed to execute 'write' on 'Document': 
-;; It isn't possible to write into a document from an
-;; asynchronously-loaded external script unless it is explicitly 
-;;
-;; Note that this history handling must happen after route definitions for it
-;; to kick in on initial page load.
-;;
-(let [h (History. false false "dummy")]
-  (goog.events/listen h EventType/NAVIGATE #(secretary/dispatch! (.-token %)))
-  (doto h (.setEnabled true)))
 
 (def unit (Math.round (/ 300 12)))
 
@@ -111,56 +60,6 @@
   (msb (apply max heaps))
   )
 
-(declare start!)
-(declare continue!)
-(declare pair!)
-(declare pair-label)
-
-(r/defc instructions < r/reactive [] 
-  [:div
-   [:p {:key "i1"} "Take turns to remove as many drips as you like from a single drip trail."]
-   [:p {:key "i2"} "Click once to choose, and once again in the same place to confirm. Take the very last drip to win the game."]
-   [:p {:key "i3"} "Press 'New Game' to start, you then have 20 seconds to make the first move before
-Al the computer loses patience and starts anyway."]
-   [:button {:on-click start! :on-touch-end start! :key "i4" } "New game"]
-   [:button {:on-click continue! :on-touch-end continue! :key "i5" } "OK"]
-   [:p {:key "i6"} "The Pairer button can help you calculate a winning move by rearranging the drips. Each press makes a different arrangement."]
-   [:button {:on-click pair! :on-touch-end pair! :key "i7" } (pair-label)]
-   ])
-
-(r/defc well-done < r/reactive []
-  [:div
-   [:p {:key "i1"} "Well done."] 
-   [:p {:key "i2"} "If you understand the winning strategy you should be able to beat Al whenever you like! If not, keep trying till you've pinned it down."]
-   [:p {:key "i3"} "We'd love to hear your explanation of how to win. Email "
-    [:a {:href "mailto:wild@maths.org"} "wild@maths.org"]
-    " with your thoughts."]
-   [:button {:on-click start! :on-touch-end start! :key "i4" } "New game"]
-   [:button {:on-click continue! :on-touch-end continue! :key "i5" } "OK"]
-])
-
-(r/defc try-again < r/reactive []
-  [:div
-   [:p {:key "i1"} "Bad luck, but try again."]
-   [:p {:key "i2"} "You may find it helpful to study what Al does. Try using the Pairer button after he's made a move to see what's special about the losing positions he leaves you in."]
-   [:button {:on-click start! :on-touch-end start! :key "i3" } "New game"]
-   [:button {:on-click continue! :on-touch-end continue! :key "i4" } "OK"]
-])
-
-(def messages
-  {:none {:visible false}
-   :instructions {:visible true
-                  :title "Rules"
-                  :body instructions 
-                  }
-   :you-won {:visible true
-             :title "You won!"
-             :body well-done}
-   :al-won {:visible true
-            :title "Al won!"
-            :body try-again}
-   })
-
 (defn game-setup [new-level-spec]
   "setup or restart the game"
   (let [heaps (apply rand-heaps new-level-spec)]
@@ -180,7 +79,7 @@ Al the computer loses patience and starts anyway."]
        :playhead 0
        })))
 
-(def game (atom (game-setup @level-spec)))
+(def game (atom (game-setup @routing/level-spec)))
 
 ;;
 ;; Don't confuse with browser history! This records the history of
@@ -197,9 +96,14 @@ Al the computer loses patience and starts anyway."]
                   (not= (:primed last-state) (:primed  new-state))
                   (not= (:pairing last-state) (:pairing  new-state)))
               )
-       (swap! game-history conj 
-              (assoc new-state :play-head
-                     (inc (count @game-history))))))))
+       (do
+         (prn  (inc (count @game-history)))
+         (swap! game-history conj 
+                (assoc new-state 
+                  :playhead (inc (count @game-history))
+                  :playback true
+                  :hovered nil
+                  )))))))
 
 ;;
 ;; define game as the single? game state atom
@@ -217,7 +121,7 @@ Al the computer loses patience and starts anyway."]
 ;;
 (defn start! [e]
   "start a new game"
-  (let [heaps (apply rand-heaps @level-spec)]
+  (let [heaps (apply rand-heaps @routing/level-spec)]
     (do
       (.preventDefault e)
       (swap! game #(assoc % 
@@ -228,29 +132,41 @@ Al the computer loses patience and starts anyway."]
                      :status :none
                      :best nil
                      :countdown 20 
-                     :status :none
                      :flash-key :timer
                      :playback false
                      :playhead 0))
       (reset! game-history [@game])
 )))
 
-(defn show-frame! [e]
+
+(defn safe-dec [val limit] (max (- val 1) limit))
+(defn safe-inc [val limit] (min (inc val) limit))
+
+(defn saved-game [current key-action history]
+  "retrieve a saved game relative to currently displayed game"
+  (let [endx (safe-dec (count history) 0)]
+    (condp = key-action
+      :first (nth history 0)
+      :back  (nth history (safe-dec (:playhead current) 0))
+      :next  (nth history (safe-inc (:playhead current) endx))
+      :last  (nth history endx))))
+
+(defn show-frame! [key-action]
   (do
-    (.preventDefault e)
     (.log js/console "undo count=" (count @game-history))
-    (.log js/console "value=" (-> e .-target .-value))
-    (let [gh @game-history
-          ghc (count gh)
-          slider (int (-> e .-target .-value))]
-      (if (and (> ghc 0)
-                 (< slider ghc))
-        (let [nth-state (nth gh slider)] 
-          (swap! game #(assoc %
-                         :heaps (:heaps nth-state)
-                         :pairing (:pairing nth-state)
-                         :primed (:primed nth-state)
-                         :playhead slider)))))))
+    (swap! game saved-game key-action @game-history)))
+
+(defn first! [e]
+  (show-frame! :first))
+
+(defn back! [e]
+  (show-frame! :back))
+
+(defn next! [e]
+  (show-frame! :next))
+
+(defn last! [e]
+  (show-frame! :last))
 
 (defn playback! [e]
   (do
@@ -521,9 +437,65 @@ Al the computer loses patience and starts anyway."]
       (.preventDefault event)
       (mouse-out! k n)
      )))
+
 ;;
 ;; rendering
 ;;
+(r/defc tap-button < r/reactive [label handler key & [attrs]]
+  (if attrs
+    [:button (merge attrs {:on-click handler :on-touch-end handler :key key}) label]
+    [:button {:on-click handler :on-touch-end handler :key key} label]
+    ))
+
+(r/defc new-game < r/reactive []
+  [:div
+   (tap-button "New Game" start! "i4") 
+   (tap-button "OK" continue! "i5")] 
+)
+
+(r/defc instructions < r/reactive [] 
+  [:div
+   [:p {:key "i1"} "Take turns to remove as many drips as you like from a single drip trail."]
+   [:p {:key "i2"} "Click once to choose, and once again in the same place to confirm. Take the very last drip to win the game."]
+   [:p {:key "i3"} "Press 'New Game' to start, you then have 20 seconds to make the first move before
+Al the computer loses patience and starts anyway."]
+   (new-game)
+   [:p {:key "i6"} "The Pairer button can help you calculate a winning move by rearranging the drips. Each press makes a different arrangement."]
+   (tap-button "Pairer" pair! "i7")
+   ])
+
+
+(r/defc well-done < r/reactive []
+  [:div
+   [:p {:key "i1"} "Well done."] 
+   [:p {:key "i2"} "If you understand the winning strategy you should be able to beat Al whenever you like! If not, keep trying till you've pinned it down."]
+   [:p {:key "i3"} "We'd love to hear your explanation of how to win. Email "
+    [:a {:href "mailto:wild@maths.org"} "wild@maths.org"]
+    " with your thoughts."]
+   (new-game)
+])
+
+(r/defc try-again < r/reactive []
+  [:div
+   [:p {:key "i1"} "Bad luck, but try again."]
+   [:p {:key "i2"} "You may find it helpful to study what Al does. Try using the Pairer button after he's made a move to see what's special about the losing positions he leaves you in."]
+   (new-game)
+])
+
+(def messages
+  {:none {:visible false}
+   :instructions {:visible true
+                  :title "Rules"
+                  :body instructions 
+                  }
+   :you-won {:visible true
+             :title "You won!"
+             :body well-done}
+   :al-won {:visible true
+            :title "Al won!"
+            :body try-again}
+   })
+
 (r/defc debug-game < r/reactive [g]
   [:div {:class "debug"} (str g)])
 
@@ -573,9 +545,6 @@ Al the computer loses patience and starts anyway."]
   [:div (map-indexed #(draw-html-heap pairing %1 %2) heaps)]
   )
 
-(defn pair-label []
-  "Pairer"
-)  
   ;; (let [pairing (:pairing @game)
   ;;       pair? (< pairing (max-pairing (:heaps @game)))]
   ;;   (if pair? 
@@ -586,9 +555,9 @@ Al the computer loses patience and starts anyway."]
   (let [game-state (r/react game)
         level (:level game-state)] 
     [:div {:class "controls"}
-     [:button {:key "stb" :on-click start! :on-touch-end start!} "New game"]
-     [:button {:key "htb" :on-click hint! :on-touch-end hint!} "Rules"]
-     [:button {:key "prb" :on-click pair! :on-touch-end pair!} (pair-label)]
+     (tap-button "New game" start! "stb")
+     (tap-button "Rules" hint! "htb")
+     (tap-button "Pairer" pair! "prb")
 ])
 )
 
@@ -631,23 +600,22 @@ Al the computer loses patience and starts anyway."]
        (r/with-props body :rum/key "body")]
       )))
 
+(r/defc icon-button < r/reactive [icon handler key]
+  (tap-button [:i {:class (str "fa fa-" icon)}] handler key))
+
 (r/defc render-footer < r/reactive []
   (let [game-state (r/react game)
         level (:level game-state)] 
     [:div {:class "footer"}
-     [:button {:key "plb" :on-click playback! :on-touch-end playback! :class (playback)} "Playback"]
+     (tap-button "Playback" playback! "plb" {:class (playback)})
      (if (:playback @game)
-       (do [:div [:button [:i
-                           {:class "fa fa-camera-retro"}]
-                  ]
-            [:input {:id "slider" :key "inp"
-                     :type "range"
-                     :min 0
-                     :value (:playhead @game)
-                     :max (count @game-history)
-                     :on-change show-frame!}]]))
-])
-)
+       (do [:span
+            (icon-button "fast-backward" first! "first")
+            (icon-button "step-backward" back! "back")
+            (icon-button "step-forward" next! "next")
+            (icon-button "fast-forward" last! "last")
+            ]))
+     ]))
 
 (r/defc render-game < r/reactive []
   (let [g (r/react game)
@@ -712,4 +680,4 @@ Al the computer loses patience and starts anyway."]
 (defonce tick-watch
   (js/setInterval tick! one-second))
 
-(add-watch level-spec "akey" game-init)
+(add-watch routing/level-spec "akey" game-init)
