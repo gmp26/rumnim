@@ -85,23 +85,31 @@
 ;; Don't confuse with browser history! This records the history of
 ;; heap state since the last new game by listening on game atom mutations
 ;;
-(def game-history (atom [@game]))
+(def game-history (atom []))
+
+(declare replay-flash)
 
 (add-watch 
  game :history
  (fn [_ _ _ new-state]
    (let [last-state (last @game-history)] 
-     (if (and (not (:playback new-state)) 
-              (or (not= (:heaps last-state) (:heaps  new-state))
-                  (not= (:primed last-state) (:primed  new-state))
-                  (not= (:pairing last-state) (:pairing  new-state)))
-              )
+     (if (and 
+          (not (:playback new-state)) 
+          (or (not= (:heaps last-state) (:heaps  new-state))
+              (not= (:primed last-state) (:primed  new-state))
+              (and
+               (not= (:flash-key last-state) (:flash-key  new-state))
+               (not= (:flash-key last-state) (replay-flash (:flash-key  new-state))))
+              (not= (:pairing last-state) (:pairing  new-state))))
        (do
-         (prn  (inc (count @game-history)))
+         (prn  (count @game-history))
+         (prn (str "last:" last-state))
+         (prn (str "new: " new-state ))
          (swap! game-history conj 
                 (assoc new-state 
-                  :playhead (inc (count @game-history))
-                  :playback true
+                  :playhead (count @game-history)
+                  :flash-key (replay-flash (:flash-key new-state))
+                  :playback (:flash-key new-state)
                   :hovered nil
                   )))))))
 
@@ -135,7 +143,7 @@
                      :flash-key :timer
                      :playback false
                      :playhead 0))
-      (reset! game-history [@game])
+      (reset! game-history [])
 )))
 
 
@@ -143,17 +151,18 @@
 (defn safe-inc [val limit] (min (inc val) limit))
 
 (defn saved-game [current key-action history]
-  "retrieve a saved game relative to currently displayed game"
+  "retrieve a saved game depending on the replay button pressed"
   (let [endx (safe-dec (count history) 0)]
-    (condp = key-action
-      :first (nth history 0)
-      :back  (nth history (safe-dec (:playhead current) 0))
-      :next  (nth history (safe-inc (:playhead current) endx))
-      :last  (nth history endx))))
+    (do (prn (str "before " (:playhead current)))
+        (condp = key-action
+             :first (nth history 0)
+             :back  (nth history (safe-dec (:playhead current) 0))
+             :next  (nth history (safe-inc (:playhead current) endx))
+             :last  (nth history endx)))))
 
 (defn show-frame! [key-action]
   (do
-    (.log js/console "undo count=" (count @game-history))
+    (.log js/console "undo count=" (count @game-history) "key=" key-action)
     (swap! game saved-game key-action @game-history)))
 
 (defn first! [e]
@@ -168,35 +177,39 @@
 (defn last! [e]
   (show-frame! :last))
 
+(defn replay-flash [key]
+  (condp = key
+    :none :playback
+    :als  :replay-als
+    :yours :replay-yours
+    :timer :replay-yours
+    key key
+    ))
+
 (defn playback! [e]
   (do
     (.preventDefault e)
-    (.debug js/console (.-target e))
-    (.debug js/console (-> e .-target .-value))
     (if (:playback @game)
-      (do
-        (swap! game #(assoc %
-                       :flash-key (:playback @game)
-                       :playback false))
-        (reset! game (last @game-history)))
+      (do 
+        (reset! game (last @game-history))
+        (swap! game #(assoc % 
+                       :playback false
+                       :flash-key (:playback @game))))
       (swap! game #(assoc %
-                     :flash-key :playback
-                     :playback (:flash-key @game)))
-
-      )))
-
-(defn playback []
-  "Playback class"
-  (if (:playback @game) "playback" ""))
+                     :flash-key (replay-flash (:flash-key @game))
+                     :playback (:flash-key @game))))))
 
 (defn flashes [a-key]
   (condp = a-key 
     :none ""
     :als "Al's turn"
+    :replay-als "Replay Al's turn"
     :yours "Your turn"
+    :replay-yours "Replay Your turn"
     :timer (str "Move or let Al go in " (:countdown @game) " s")
     :game-over "Game Over"
-    :playback "Playback"))
+    :playback "Replaying"
+    a-key (prn "barf!" a-key)))
 
 ;;
 ;; layout
@@ -496,8 +509,18 @@ Al the computer loses patience and starts anyway."]
             :body try-again}
    })
 
+(r/defc debug-history-entry < r/reactive [i he]
+  [:div {:class "debug" :key (str "he" i)} (str  he)])
+
+(r/defc debug-history < r/reactive []
+  [:div
+   (map-indexed #(debug-history-entry %1 %2) (r/react game-history))])
+
 (r/defc debug-game < r/reactive [g]
-  [:div {:class "debug"} (str g)])
+  [:section
+   [:div {:class "debug" :key "d1"} (str g)]
+   [:h3 {:key "d2"} "History" ]
+   (r/with-props debug-history :rum/key "d3")])
 
 
 (r/defc render-html-item < r/reactive [pairing k n i]
@@ -604,17 +627,21 @@ Al the computer loses patience and starts anyway."]
   (tap-button [:i {:class (str "fa fa-" icon)}] handler key))
 
 (r/defc render-footer < r/reactive []
-  (let [game-state (r/react game)
-        level (:level game-state)] 
+  (let [g (r/react game)
+        level (:level g)] 
     [:div {:class "footer"}
-     (tap-button "Playback" playback! "plb" {:class (playback)})
-     (if (:playback @game)
-       (do [:span
-            (icon-button "fast-backward" first! "first")
-            (icon-button "step-backward" back! "back")
-            (icon-button "step-forward" next! "next")
-            (icon-button "fast-forward" last! "last")
-            ]))
+     (if (:playback g)
+       (do 
+         [:span
+          (tap-button "Replaying" playback! "plb" {:class "playback"})
+          (icon-button "fast-backward" first! "first")
+          (icon-button "step-backward" back! "back")
+          (icon-button "step-forward" next! "next")
+          (icon-button "fast-forward" last! "last")
+          (str "move " (:playhead g))
+          ])
+       (tap-button "Replay" playback! "plb" {:class ""})
+       )
      ]))
 
 (r/defc render-game < r/reactive []
@@ -631,6 +658,7 @@ Al the computer loses patience and starts anyway."]
       (r/with-props render-popover :rum/key "popup")
       ]
      (r/with-props render-footer :rum/key "footer")
+     (debug-game g)
      ])
 )
 
@@ -658,6 +686,8 @@ Al the computer loses patience and starts anyway."]
         fk (:flash-key g)
         timer (:countdown g)]
     (if (and
+         (not= fk :replay-als)
+         (not= fk :replay-yours)
          (not= fk :playback)
          (not= fk :game-over) 
          timer)
