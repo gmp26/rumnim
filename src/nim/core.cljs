@@ -76,7 +76,7 @@
        :best nil
        :score [0 0]
        :playback false
-       :playhead 0
+       :playhead 1
        })))
 
 (def game (atom (game-setup @routing/level-spec)))
@@ -92,11 +92,15 @@
 (add-watch 
  game :history
  (fn [_ _ _ new-state]
-   (let [last-state (last @game-history)] 
+   (let [ph (:playhead @game)
+         gh @game-history
+         last-state (if (>= ph (count gh))
+                      (last gh)
+                      (nth gh ph))] 
      (if (and 
           (not (:playback new-state)) 
           (or (not= (:heaps last-state) (:heaps  new-state))
-              (not= (:primed last-state) (:primed  new-state))
+              #_(not= (:primed last-state) (:primed  new-state))
               (and
                (not= (:flash-key last-state) (:flash-key  new-state))
                (not= (:flash-key last-state) (replay-flash (:flash-key  new-state))))
@@ -111,7 +115,8 @@
                   :flash-key (replay-flash (:flash-key new-state))
                   :playback (:flash-key new-state)
                   :hovered nil
-                  )))))))
+                  ))
+         (swap! game #(assoc % :playhead (count @game-history))))))))
 
 ;;
 ;; define game as the single? game state atom
@@ -142,7 +147,7 @@
                      :countdown 20 
                      :flash-key :timer
                      :playback false
-                     :playhead 0))
+                     :playhead 1))
       (reset! game-history [])
 )))
 
@@ -190,14 +195,19 @@
   (do
     (.preventDefault e)
     (if (:playback @game)
+      (do
+        (let [move (:playhead @game)] 
+          (reset! game (nth @game-history move))
+          (swap! game #(assoc % 
+                         :playback false
+                         :flash-key (:playback @game)
+                         :playhead move))))
       (do 
-        (reset! game (last @game-history))
-        (swap! game #(assoc % 
-                       :playback false
-                       :flash-key (:playback @game))))
-      (swap! game #(assoc %
-                     :flash-key (replay-flash (:flash-key @game))
-                     :playback (:flash-key @game))))))
+        (swap! game #(assoc %
+                         :flash-key (replay-flash (:flash-key @game))
+                         :playback (:flash-key @game)
+                         ))
+        (reset! game-history (take (:playhead @game) @game-history))))))
 
 (defn flashes [a-key]
   (condp = a-key 
@@ -522,7 +532,6 @@ Al the computer loses patience and starts anyway."]
    [:h3 {:key "d2"} "History" ]
    (r/with-props debug-history :rum/key "d3")])
 
-
 (r/defc render-html-item < r/reactive [pairing k n i]
   "render item i in kth heap"
   (let [g @game
@@ -541,7 +550,9 @@ Al the computer loses patience and starts anyway."]
        :width (px (* radius 2))
        :height (px (* radius 2))
        :background-color 
-       (if (= (:flash-key g) :als)
+       (if (or 
+            (= (:flash-key g) :als) 
+            (= (:flash-key g) :replay-als))
          (if (is-highlighted? k i) 
            "rgba(255, 180, 0, 1)" 
            "rgba(100, 180, 255, 1)")
@@ -552,7 +563,6 @@ Al the computer loses patience and starts anyway."]
        }}
      
      ]))
-
 
 (r/defc render-html-heap < r/reactive [pairing k n]
   [:div 
