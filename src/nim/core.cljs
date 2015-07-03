@@ -476,10 +476,13 @@
     [:button {:on-click handler :on-touch-end handler :key key} label]
     ))
 
+(declare replay-button)
+
 (r/defc new-game < r/reactive []
   [:div
    (tap-button "New Game" start! "i4") 
-   (tap-button "OK" continue! "i5")] 
+   (tap-button "OK" continue! "i5")
+   (replay-button "i6")]
 )
 
 (r/defc instructions < r/reactive [] 
@@ -586,22 +589,6 @@ Al the computer loses patience and starts anyway."]
   [:div (map-indexed #(draw-html-heap pairing %1 %2) heaps)]
   )
 
-  ;; (let [pairing (:pairing @game)
-  ;;       pair? (< pairing (max-pairing (:heaps @game)))]
-  ;;   (if pair? 
-  ;;       (if (= 0 pairing) "Pair" "Pair again") 
-  ;;       "Separate")))
-
-(r/defc render-toolbar < r/reactive []
-  (let [game-state (r/react game)
-        level (:level game-state)] 
-    [:div {:class "controls"}
-     (tap-button "New game" start! "stb")
-     (tap-button "Rules" hint! "htb")
-     (tap-button "Pairer" pair! "prb")
-])
-)
-
 (defn player-score! []
   (nth (:score @game) 0))
 
@@ -649,44 +636,81 @@ Al the computer loses patience and starts anyway."]
    [:span {:class (str "fa fa-" icon)}] 
    (str " " label)])
 
-(r/defc render-footer < r/reactive []
+(r/defc replay-button < r/reactive [key]
+  (tap-button (icon-label "fast-backward" "Replay") playback! key {:class "foo"}))
+
+#_(r/defc render-footer < r/reactive []
   (let [g (r/react game)
         level (:level g)
         ghc (count (r/react game-history))] 
     [:div {:class "footer"}
      (if (:playback g)
-       (do 
-         [:span
-          (tap-button "Resume" playback! "plb" {:class "playback"})
-          #_(icon-button "fast-backward" first! "first")
-          (if (not= (:playhead g) 0) 
-            (icon-button "step-backward" back! "back"))
-          (if (not= (:playhead g) ghc) 
-            (icon-button "step-forward" next! "next"))
-          #_(icon-button "fast-forward" last! "last")
-          (str "move " (:playhead g))
-          ])
-       (tap-button (icon-label "fast-backward" "Replay") playback! "plb" {:class ""})
-       )
+       [:span {:key "f1"}
+        (if (not= (:playhead g) 0) 
+          (icon-button "step-backward" back! "back"))
+        (if (not= (:playhead g) ghc) 
+          (icon-button "step-forward" next! "next"))
+        (str "move " (:playhead g) " ")
+        (tap-button "Resume" playback! "plb" {:class "playback"})
+        ]
+       (replay-button "f2"))
      ]))
+
+(r/defc render-toolbar < r/reactive [g]
+  (let [level (:level g)
+        playback (:playback g)
+        ghc (count (r/react game-history))] 
+    [:div {:style {:width "300px"}}
+     (if playback
+       [:span {:class "controls"}
+        [:span {:key "t0" :class "left"}
+         (tap-button "New game" start! "stb")
+         (if (not= (:playhead g) 0) 
+           (icon-button "step-backward" back! "back"))
+         (do 
+           (prn (str "playhead " (:playhead g)))
+           (prn (str "ghc " ghc))
+           (if (< (inc (:playhead g)) ghc) 
+             (icon-button "step-forward" next! "next")))]
+        [:span {:key "f1" :class "center"}
+         (str "move " (:playhead g))]
+        [:span {:key "t2" :class "right"} 
+         (tap-button "Resume" playback! "plb" {:class "playback"})
+         (tap-button "Pairer" pair! "prb")
+         ]]
+
+       [:span {:class "controls"}
+        [:span {:class "left"}
+         (tap-button "New game" start! "stb")
+         (tap-button "Rules" hint! "htb")
+         ]
+        [:span {:class "right"}
+         (if (> ghc 1)
+           [:span {:class "footer right" :key "rep"}
+            (replay-button "replay")])
+         (tap-button "Pairer" pair! "prb")
+         ]]
+        
+       )]))
 
 (r/defc render-game < r/reactive []
   (let [g (r/react game)
         pairing (:pairing g)
         heaps (:heaps g)
         flash-msg (flashes (:flash-key g))
-        score (:score g)]
+          score (:score g)
+        playback (:playback g)]
     [:div
      [:h1 {:key "g1"} "Drips" ]
-     (r/with-props render-toolbar :rum/key "toolbar")
+     (r/with-props render-toolbar g :rum/key "toolbar")
      [:div {:key "g2" :class "board"}
       (r/with-props render-html-board pairing heaps flash-msg score :rum/key "board")
       (r/with-props render-popover :rum/key "popup")
       ]
-     (r/with-props render-footer :rum/key "footer")
+     #_(r/with-props render-footer :rum/key "footer")
      (debug-game g)
      ])
-)
+  )
 
 (r/mount (render-game)
          (.getElementById js/document "game"))
@@ -723,7 +747,7 @@ Al the computer loses patience and starts anyway."]
                                     :countdown (- timer 1)
                                     :flash-key :als
                                     :best [k n])))
-       (= timer -4) (do 
+       (= timer -3) (do 
                       (make-best-move! (:best @game))
                       (if (= 0 (reduce + (:heaps @game)))
                         (show-a-winner!))
