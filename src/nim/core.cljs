@@ -637,7 +637,7 @@ Al the computer loses patience and starts anyway."]
    (str " " label)])
 
 (r/defc replay-button < r/reactive [key]
-  (tap-button (icon-label "fast-backward" "Replay") playback! key {:class "foo"}))
+  (tap-button (icon-label "fast-backward" "Replay") playback! key))
 
 #_(r/defc render-footer < r/reactive []
   (let [g (r/react game)
@@ -660,11 +660,11 @@ Al the computer loses patience and starts anyway."]
   (let [level (:level g)
         playback (:playback g)
         ghc (count (r/react game-history))] 
-    [:div {:style {:width "300px"}}
+    [:div {:class "toolbar"}
      (if playback
        [:span {:class "controls"}
-        [:span {:key "t0" :class "left"}
-         (tap-button "New game" start! "stb")
+        (tap-button "New game" start! "stb")
+        [:span {:key "t0" :class "left footer"}
          (if (not= (:playhead g) 0) 
            (icon-button "step-backward" back! "back"))
          (do 
@@ -674,8 +674,9 @@ Al the computer loses patience and starts anyway."]
              (icon-button "step-forward" next! "next")))]
         [:span {:key "f1" :class "center"}
          (str "move " (:playhead g))]
-        [:span {:key "t2" :class "right"} 
-         (tap-button "Resume" playback! "plb" {:class "playback"})
+        [:span {:key "t2" :class "right"}
+         [:span {:class "footer" :key "rep"}
+          (tap-button "Resume" playback! "plb" )]
          (tap-button "Pairer" pair! "prb")
          ]]
 
@@ -686,7 +687,7 @@ Al the computer loses patience and starts anyway."]
          ]
         [:span {:class "right"}
          (if (> ghc 1)
-           [:span {:class "footer right" :key "rep"}
+           [:span {:class "footer" :key "rep"}
             (replay-button "replay")])
          (tap-button "Pairer" pair! "prb")
          ]]
@@ -707,7 +708,6 @@ Al the computer loses patience and starts anyway."]
       (r/with-props render-html-board pairing heaps flash-msg score :rum/key "board")
       (r/with-props render-popover :rum/key "popup")
       ]
-     #_(r/with-props render-footer :rum/key "footer")
      (debug-game g)
      ])
   )
