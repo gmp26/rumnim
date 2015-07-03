@@ -8,12 +8,22 @@
 
 (enable-console-print!)
 
+;; Sound
+;; (def ^:constant sound-src "/sounds/bell.mp3")
+;; (def sound (js/Audio. sound-src))
+;; (defn play-sound [] 
+;;   (do 
+;;     (set! (.-src sound) sound-src) 
+;;     (.play sound)))
 
-;; Things to sort out:
-;; Playhead is inconsistent
-;; Need to retain player info in history
-;; Forward and back buttons might be better (Undo and Redo?)
-
+;; Sounds
+(def ^:constant drip "assets/drip.mp3")
+(def ^:constant drips "assets/pair.mp3")
+(defn play-sound [mp3]
+  (do 
+    (let [sound (js/Audio. mp3)]
+      (set! (.-src sound) mp3) 
+      (.play sound))))
 
 (declare game-init)
 
@@ -394,7 +404,7 @@
                          :countdown 2
                          :primed nil
                          :heaps new-heaps)))
-
+        (play-sound drip)
         (show-a-winner!))
       (prime! k n))))
 
@@ -408,7 +418,7 @@
                      :pairing 0
                      :primed nil
                      :heaps new-heaps))
-      #_(from-k-take-n! k n)
+      (play-sound drip)
       )))
 
 (defn mouse-out! [k n]
@@ -419,7 +429,8 @@
   "hover over the nth item in heap k"
   (let [fkey (:flash-key @game)]
     (if (or (= fkey :yours) (= fkey :timer))
-      (swap! game #(assoc % :hovered [k n])))))
+      (swap! game #(assoc % :hovered [k n]))
+      )))
 
 (defn next-pairing [p] 
   (inc p))
@@ -431,7 +442,8 @@
         pairing (if (>= p (max-pairing heaps)) 0 (next-pairing p))]
     (do
       (.preventDefault e)
-      (swap! game #(assoc % :pairing pairing)))
+      (swap! game #(assoc % :pairing pairing))
+      (play-sound drips))
     )
 )
 
@@ -565,7 +577,7 @@ Al the computer loses patience and starts anyway."]
             (= (:flash-key g) :replay-als))
          (if (is-highlighted? k i) 
            "rgba(255, 180, 0, 1)" 
-           "rgba(100, 180, 255, 1)")
+           "rgba(219, 133, 215, 1)")
          (if (is-highlighted? k i) 
            "rgba(235, 100, 0, 1)" 
            "rgba(80, 100, 255, 1)")
@@ -589,14 +601,8 @@ Al the computer loses patience and starts anyway."]
   [:div (map-indexed #(draw-html-heap pairing %1 %2) heaps)]
   )
 
-(defn player-score! []
-  (nth (:score @game) 0))
-
-(defn computer-score! []
-  (nth (:score @game) 1))
-
 (r/defc render-flash < r/reactive [flash-msg score]
-  (let [[als yours] score] 
+  (let [[yours als] score] 
     [:div.flash-box
      [:span.msg {:key "f1"} flash-msg]
      [:span.score {:key "f2"} "Al: " als " You: " yours]
@@ -708,7 +714,7 @@ Al the computer loses patience and starts anyway."]
       (r/with-props render-html-board pairing heaps flash-msg score :rum/key "board")
       (r/with-props render-popover :rum/key "popup")
       ]
-     (debug-game g)
+     ;; (debug-game g)
      ])
   )
 
@@ -723,9 +729,9 @@ Al the computer loses patience and starts anyway."]
     (let [loser (:flash-key @game)
           [yu al] (:score @game)
           [score status]  (if (= :yours loser)
-                         [[yu (inc al)] :al-won]
-                         [[(inc yu) al] :you-won]
-                         )]
+                            [[yu (inc al)] :al-won]
+                            [[(inc yu) al] :you-won]
+                            )]
       (swap! game #(assoc %
                      :status status 
                      :flash-key :game-over
@@ -761,3 +767,5 @@ Al the computer loses patience and starts anyway."]
   (js/setInterval tick! one-second))
 
 (add-watch routing/level-spec "akey" game-init)
+
+
