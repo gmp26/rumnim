@@ -76,7 +76,7 @@
        :best nil
        :score [0 0]
        :playback false
-       :playhead 1
+       :playhead 0
        })))
 
 (def game (atom (game-setup @routing/level-spec)))
@@ -92,15 +92,11 @@
 (add-watch 
  game :history
  (fn [_ _ _ new-state]
-   (let [ph (:playhead @game)
-         gh @game-history
-         last-state (if (>= ph (count gh))
-                      (last gh)
-                      (nth gh ph))] 
+   (let [last-state (last @game-history)] 
      (if (and 
           (not (:playback new-state)) 
           (or (not= (:heaps last-state) (:heaps  new-state))
-              #_(not= (:primed last-state) (:primed  new-state))
+              (not= (:primed last-state) (:primed  new-state))
               (and
                (not= (:flash-key last-state) (:flash-key  new-state))
                (not= (:flash-key last-state) (replay-flash (:flash-key  new-state))))
@@ -115,8 +111,7 @@
                   :flash-key (replay-flash (:flash-key new-state))
                   :playback (:flash-key new-state)
                   :hovered nil
-                  ))
-         (swap! game #(assoc % :playhead (count @game-history))))))))
+                  )))))))
 
 ;;
 ;; define game as the single? game state atom
@@ -147,7 +142,7 @@
                      :countdown 20 
                      :flash-key :timer
                      :playback false
-                     :playhead 1))
+                     :playhead 0))
       (reset! game-history [])
 )))
 
@@ -195,19 +190,14 @@
   (do
     (.preventDefault e)
     (if (:playback @game)
-      (do
-        (let [move (:playhead @game)] 
-          (reset! game (nth @game-history move))
-          (swap! game #(assoc % 
-                         :playback false
-                         :flash-key (:playback @game)
-                         :playhead move))))
       (do 
-        (swap! game #(assoc %
-                         :flash-key (replay-flash (:flash-key @game))
-                         :playback (:flash-key @game)
-                         ))
-        (reset! game-history (take (:playhead @game) @game-history))))))
+        (reset! game (last @game-history))
+        (swap! game #(assoc % 
+                       :playback false
+                       :flash-key (:playback @game))))
+      (swap! game #(assoc %
+                     :flash-key (replay-flash (:flash-key @game))
+                     :playback (:flash-key @game))))))
 
 (defn flashes [a-key]
   (condp = a-key 
@@ -388,22 +378,35 @@
           (= (:flash-key @game) :timer)) 
     (if (is-primed? k n)
       (do
-        (un-prime!)
-        (swap! game #(assoc % 
-                       :flash-key :als
-                       :countdown 2))
-        (from-k-take-n! k (at-k-leave-n! k n))
+;;
+;; Do these atomically!
+;;
+        #_(un-prime!)
+        #_(from-k-take-n! k (at-k-leave-n! k n))
+
+        (let [heaps (:heaps @game)
+              new-heaps (heaps-at-k-take-n heaps k (at-k-leave-n! k n))]
+          (swap! game #(assoc % 
+                         :flash-key :als
+                         :countdown 2
+                         :primed nil
+                         :heaps new-heaps)))
+
         (show-a-winner!))
       (prime! k n))))
 
 (defn make-best-move! [[k n]]
   (do 
-    (swap! game #(assoc % 
-                   :countdown nil
-                   :flash-key :yours
-                   :pairing 0
-                   :primed nil))
-    (from-k-take-n! k n)))
+    (let [heaps (:heaps @game)
+          new-heaps (heaps-at-k-take-n heaps k n)]
+      (swap! game #(assoc % 
+                     :countdown nil
+                     :flash-key :yours
+                     :pairing 0
+                     :primed nil
+                     :heaps new-heaps))
+      #_(from-k-take-n! k n)
+      )))
 
 (defn mouse-out! [k n]
   "mouse-out all"
@@ -532,6 +535,7 @@ Al the computer loses patience and starts anyway."]
    [:h3 {:key "d2"} "History" ]
    (r/with-props debug-history :rum/key "d3")])
 
+
 (r/defc render-html-item < r/reactive [pairing k n i]
   "render item i in kth heap"
   (let [g @game
@@ -563,6 +567,7 @@ Al the computer loses patience and starts anyway."]
        }}
      
      ]))
+
 
 (r/defc render-html-heap < r/reactive [pairing k n]
   [:div 
