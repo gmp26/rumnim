@@ -195,9 +195,12 @@
         (swap! game #(assoc % 
                        :playback false
                        :flash-key (:playback @game))))
-      (swap! game #(assoc %
+      (show-frame! :first)
+      #_(swap! game #(assoc %
                      :flash-key (replay-flash (:flash-key @game))
-                     :playback (:flash-key @game))))))
+                     :playback (:flash-key @game)
+                     )))
+    ))
 
 (defn flashes [a-key]
   (condp = a-key 
@@ -641,21 +644,29 @@ Al the computer loses patience and starts anyway."]
 (r/defc icon-button < r/reactive [icon handler key]
   (tap-button [:i {:class (str "fa fa-" icon)}] handler key))
 
+(r/defc icon-label < r/reactive [icon label]
+  [:span  
+   [:span {:class (str "fa fa-" icon)}] 
+   (str " " label)])
+
 (r/defc render-footer < r/reactive []
   (let [g (r/react game)
-        level (:level g)] 
+        level (:level g)
+        ghc (count (r/react game-history))] 
     [:div {:class "footer"}
      (if (:playback g)
        (do 
          [:span
-          (tap-button "Replaying" playback! "plb" {:class "playback"})
-          (icon-button "fast-backward" first! "first")
-          (icon-button "step-backward" back! "back")
-          (icon-button "step-forward" next! "next")
-          (icon-button "fast-forward" last! "last")
+          (tap-button "Resume" playback! "plb" {:class "playback"})
+          #_(icon-button "fast-backward" first! "first")
+          (if (not= (:playhead g) 0) 
+            (icon-button "step-backward" back! "back"))
+          (if (not= (:playhead g) ghc) 
+            (icon-button "step-forward" next! "next"))
+          #_(icon-button "fast-forward" last! "last")
           (str "move " (:playhead g))
           ])
-       (tap-button "Replay" playback! "plb" {:class ""})
+       (tap-button (icon-label "fast-backward" "Replay") playback! "plb" {:class ""})
        )
      ]))
 
