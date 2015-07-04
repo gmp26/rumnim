@@ -20,10 +20,9 @@
 (def ^:constant drip "assets/drip.mp3")
 (def ^:constant drips "assets/pair.mp3")
 (defn play-sound [mp3]
-  (do 
-    (let [sound (js/Audio. mp3)]
-      (set! (.-src sound) mp3) 
-      (.play sound))))
+  (let [sound (js/Audio. mp3)]
+    (do (set! (.-src sound) mp3) 
+        (.play sound))))
 
 (declare game-init)
 
@@ -42,6 +41,10 @@
 ;; don't assume es6 yet!
 (def log2 #(/ (Math.log %) (Math.log 2)))
 (def msb #(Math.floor (log2 %)))
+
+
+(defn foo [x y]
+  (+ 3 (* x y)))
 
 (defn rand-in-range [start end]
   "generate an int inside [start, end] closed interval"
@@ -216,9 +219,9 @@
   (condp = a-key 
     :none ""
     :als "Al's turn"
-    :replay-als "Replay Al's turn"
+    :replay-als "Replaying Al's turn"
     :yours "Your turn"
-    :replay-yours "Replay Your turn"
+    :replay-yours "Replaying Your turn"
     :timer (str "Move or let Al go in " (:countdown @game) " s")
     :game-over "Game Over"
     :playback "Replaying"
@@ -554,6 +557,13 @@ Al the computer loses patience and starts anyway."]
    (r/with-props debug-history :rum/key "d3")])
 
 
+(defn primed [g k i]
+  (if (or 
+       (= (:flash-key g) :timer)
+       (= (:flash-key g) :yours) 
+       (= (:flash-key g) :replay-yours))
+    (if (is-primed? k i) "primed" "")))
+
 (r/defc render-html-item < r/reactive [pairing k n i]
   "render item i in kth heap"
   (let [g @game
@@ -561,7 +571,7 @@ Al the computer loses patience and starts anyway."]
     [:div 
      
      {:id key
-      :class "blobs"
+      :class (str  "blobs " (primed g k i))
       :on-click (fn [e] (item-clicked e))
       :on-touch-end (fn [e] (item-clicked e))
       :on-mouse-over (fn [e] (item-over e))
