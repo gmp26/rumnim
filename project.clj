@@ -21,7 +21,7 @@
     :builds [{:id "dev"
               :source-paths ["src"]
               
-              :figwheel { :on-jsload "nim.core/on-js-reload" }
+              ;; :figwheel { :on-jsload "nim.core/on-js-reload" }
 
               :compiler {:main nim.core
                          :asset-path "js/compiled/out"

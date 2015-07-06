@@ -652,7 +652,7 @@ Al the computer loses patience and starts anyway."]
         ghc (count (r/react game-history))] 
     [:div {:class "toolbar"}
      (if playback
-       [:span {:class "controls"}
+       [:span {:class "controls" :key "t1"}
         (tap-button "New game" start! "stb")
         [:span {:key "t0" :class "left footer"}
          (if (not= (:playhead g) 0) 
@@ -669,12 +669,12 @@ Al the computer loses patience and starts anyway."]
          (tap-button "Pairer" pair! "prb")
          ]]
 
-       [:span {:class "controls"}
-        [:span {:class "left"}
+       [:span {:class "controls" :key "t2"}
+        [:span {:class "left" :key "left"}
          (tap-button "New game" start! "stb")
          (tap-button "Rules" hint! "htb")
          ]
-        [:span {:class "right"}
+        [:span {:class "right" :key "right"}
          (if (> ghc 1)
            [:span {:class "footer" :key "rep"}
             (replay-button "replay")])

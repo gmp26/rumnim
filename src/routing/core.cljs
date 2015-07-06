@@ -1,4 +1,4 @@
-(ns ^:figwheel-always routing.core
+(ns ^:figwheel-no-load routing.core
     (:require [goog.events :as events]
               [goog.history.EventType :as EventType]
               [secretary.core :as secretary :refer-macros [defroute]]
@@ -27,17 +27,29 @@
 (defroute 
   "/heaps/:heaps/height/:height" {:as params}
   (do
-    (swap! level-spec (fn [cur x y] [2 (int x) 1 (int y)])
+    (swap! level-spec (fn [cur x y] 
+                        (let [valid-x (max 2 (min (int x) 6))
+                              valid-y (max 1 (min (int y) 15))]
+                         [2 valid-x 1 valid-y]))
              (:heaps params)
              (:height params))
-    (js/console.log (str (:heaps params) ":" (:height params)))))
+    ))
 
 (defroute 
   "/levels/:x/:x/:x/:x" {:as params}
   (do
-    (let [read-levels #(map int (flatten %))]
-      (swap! level-spec (fn [cur levels] (read-levels levels)) (:x params))
-      (js/console.log (str "levels" (read-levels (:x params)))))))
+    (let [read-levels #(map int (flatten %))
+          valid-range (fn [a b v] (max a (min b v)))]
+      (swap! level-spec 
+             (fn [cur levels] 
+               (let [[heaps-min heaps-max height-min height-max] (read-levels levels)
+                     valid-heaps-min (valid-range 1 6 heaps-min)
+                     valid-heaps-max (valid-range valid-heaps-min 6 heaps-max)
+                     valid-height-min (valid-range 1 15 height-min)
+                     valid-height-max (valid-range valid-height-min 15 height-max)]
+                 [valid-heaps-min valid-heaps-max valid-height-min valid-height-max])
+               ) (:x params))
+      )))
 
 
 ;; history configuration.
