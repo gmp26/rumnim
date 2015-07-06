@@ -1,4 +1,4 @@
-(ns ^:figwheel-always nim.core
+(ns ^:figwheel-no-load nim.core
     (:require [rum :as r]
               [cljs.reader :as reader]
               [cljsjs.react]
@@ -114,17 +114,13 @@
                (not= (:flash-key last-state) (:flash-key  new-state))
                (not= (:flash-key last-state) (replay-flash (:flash-key  new-state))))
               (not= (:pairing last-state) (:pairing  new-state))))
-       (do
-         (prn  (count @game-history))
-         (prn (str "last:" last-state))
-         (prn (str "new: " new-state ))
-         (swap! game-history conj 
-                (assoc new-state 
-                  :playhead (count @game-history)
-                  :flash-key (replay-flash (:flash-key new-state))
-                  :playback (:flash-key new-state)
-                  :hovered nil
-                  )))))))
+       (swap! game-history conj 
+              (assoc new-state 
+                :playhead (count @game-history)
+                :flash-key (replay-flash (:flash-key new-state))
+                :playback (:flash-key new-state)
+                :hovered nil
+                ))))))
 
 ;;
 ;; define game as the single? game state atom
@@ -132,9 +128,7 @@
 ;; TODO: change to defonce
 ;;
 (defn game-init [key levels old-levels new-level-spec]
-  (do
-    (prn "reset")
-    (reset! game (game-setup new-level-spec))))
+  (reset! game (game-setup new-level-spec)))
 
 ;;
 ;; I don't see any way to make this reloadable, but at least we
@@ -166,17 +160,14 @@
 (defn saved-game [current key-action history]
   "retrieve a saved game depending on the replay button pressed"
   (let [endx (safe-dec (count history) 0)]
-    (do (prn (str "before " (:playhead current)))
-        (condp = key-action
-             :first (nth history 0)
-             :back  (nth history (safe-dec (:playhead current) 0))
-             :next  (nth history (safe-inc (:playhead current) endx))
-             :last  (nth history endx)))))
+    (condp = key-action
+      :first (nth history 0)
+      :back  (nth history (safe-dec (:playhead current) 0))
+      :next  (nth history (safe-inc (:playhead current) endx))
+      :last  (nth history endx))))
 
 (defn show-frame! [key-action]
-  (do
-    (.log js/console "undo count=" (count @game-history) "key=" key-action)
-    (swap! game saved-game key-action @game-history)))
+  (swap! game saved-game key-action @game-history))
 
 (defn first! [e]
   (show-frame! :first))
@@ -225,7 +216,7 @@
     :timer (str "Move or let Al go in " (:countdown @game) " s")
     :game-over "Game Over"
     :playback "Replaying"
-    a-key (prn "barf!" a-key)))
+    a-key (prn "flashes barf!" a-key)))
 
 ;;
 ;; layout
@@ -611,9 +602,9 @@ Al the computer loses patience and starts anyway."]
   [:div (map-indexed #(draw-html-heap pairing %1 %2) heaps)]
   )
 
-(r/defc render-flash < r/reactive [flash-msg score]
+(r/defc render-flash < r/reactive [fkey flash-msg score]
   (let [[yours als] score] 
-    [:div.flash-box
+    [:div.flash-box {:class (subs (str fkey) 1)}
      [:span.msg {:key "f1"} flash-msg]
      [:span.score {:key "f2"} "Al: " als " You: " yours]
      ]))
@@ -621,12 +612,12 @@ Al the computer loses patience and starts anyway."]
 (defn divider-offset [pairing]
   (nth [0 63 132 477] pairing))
 
-(r/defc render-html-board < r/reactive [pairing heaps flash-msg score]
+(r/defc render-html-board < r/reactive [pairing heaps fkey flash-msg score]
   [:div.bordered
    {:style {:background-position (str  0 "px " (divider-offset pairing) "px")}}
-   (render-flash flash-msg score)
+   (render-flash fkey flash-msg score)
    [:div.playfield  
-    [:div.pad
+    [:div.pad 
      (render-html-heaps pairing heaps)]]])
 
 (r/defc para < r/reactive [text]
@@ -644,8 +635,8 @@ Al the computer loses patience and starts anyway."]
        (r/with-props body :rum/key "body")]
       )))
 
-(r/defc icon-button < r/reactive [icon handler key]
-  (tap-button [:i {:class (str "fa fa-" icon)}] handler key))
+(r/defc icon-button < r/reactive [icon handler key & [attrs]]
+  (tap-button [:i {:class (str "fa fa-" icon)}] handler key attrs))
 
 (r/defc icon-label < r/reactive [icon label]
   [:span  
@@ -654,23 +645,6 @@ Al the computer loses patience and starts anyway."]
 
 (r/defc replay-button < r/reactive [key]
   (tap-button (icon-label "fast-backward" "Replay") playback! key))
-
-#_(r/defc render-footer < r/reactive []
-  (let [g (r/react game)
-        level (:level g)
-        ghc (count (r/react game-history))] 
-    [:div {:class "footer"}
-     (if (:playback g)
-       [:span {:key "f1"}
-        (if (not= (:playhead g) 0) 
-          (icon-button "step-backward" back! "back"))
-        (if (not= (:playhead g) ghc) 
-          (icon-button "step-forward" next! "next"))
-        (str "move " (:playhead g) " ")
-        (tap-button "Resume" playback! "plb" {:class "playback"})
-        ]
-       (replay-button "f2"))
-     ]))
 
 (r/defc render-toolbar < r/reactive [g]
   (let [level (:level g)
@@ -682,12 +656,11 @@ Al the computer loses patience and starts anyway."]
         (tap-button "New game" start! "stb")
         [:span {:key "t0" :class "left footer"}
          (if (not= (:playhead g) 0) 
-           (icon-button "step-backward" back! "back"))
-         (do 
-           (prn (str "playhead " (:playhead g)))
-           (prn (str "ghc " ghc))
-           (if (< (inc (:playhead g)) ghc) 
-             (icon-button "step-forward" next! "next")))]
+           (icon-button "step-backward" back! "back")
+           (icon-button "step-backward disabled" back! "back" {:class "disabled"}))
+         (if (< (inc (:playhead g)) ghc) 
+           (icon-button "step-forward" next! "next")
+           (icon-button "step-forward disabled" next! "next" {:class "disabled"}))]
         [:span {:key "f1" :class "center"}
          (str "move " (:playhead g))]
         [:span {:key "t2" :class "right"}
@@ -714,14 +687,15 @@ Al the computer loses patience and starts anyway."]
   (let [g (r/react game)
         pairing (:pairing g)
         heaps (:heaps g)
-        flash-msg (flashes (:flash-key g))
+        fkey  (:flash-key g)
+        flash-msg (flashes fkey)
           score (:score g)
         playback (:playback g)]
     [:div
      [:h1 {:key "g1"} "Drips" ]
      (r/with-props render-toolbar g :rum/key "toolbar")
      [:div {:key "g2" :class "board"}
-      (r/with-props render-html-board pairing heaps flash-msg score :rum/key "board")
+      (r/with-props render-html-board pairing heaps fkey flash-msg score :rum/key "board")
       (r/with-props render-popover :rum/key "popup")
       ]
      ;; (debug-game g)

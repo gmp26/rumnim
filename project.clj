@@ -37,7 +37,6 @@
               :source-paths ["src"]
               :compiler {:output-to "resources/public/js/compiled/build/nim.js"
                          :main nim.core                         
-                         :output-dir "resources/public/js/compiled/build/"
                          :optimizations :advanced
                          :pretty-print false
                          :warnings  {:single-segment-namespace false}}}

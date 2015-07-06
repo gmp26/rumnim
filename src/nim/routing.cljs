@@ -1,4 +1,4 @@
-(ns ^:figwheel-always routing.core
+(ns ^:figwheel-no-load routing.core
     (:require [goog.events :as events]
               [goog.history.EventType :as EventType]
               [secretary.core :as secretary :refer-macros [defroute]]
