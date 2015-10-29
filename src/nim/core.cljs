@@ -11,9 +11,9 @@
 ;; Sound
 ;; (def ^:constant sound-src "/sounds/bell.mp3")
 ;; (def sound (js/Audio. sound-src))
-;; (defn play-sound [] 
-;;   (do 
-;;     (set! (.-src sound) sound-src) 
+;; (defn play-sound []
+;;   (do
+;;     (set! (.-src sound) sound-src)
 ;;     (.play sound)))
 
 ;; Sounds
@@ -21,7 +21,7 @@
 (def ^:constant drips "assets/pair.mp3")
 (defn play-sound [mp3]
   (let [sound (js/Audio. mp3)]
-    (do (set! (.-src sound) mp3) 
+    (do (set! (.-src sound) mp3)
         (.play sound))))
 
 (declare game-init)
@@ -102,20 +102,20 @@
 
 (declare replay-flash)
 
-(add-watch 
+(add-watch
  game :history
  (fn [_ _ _ new-state]
-   (let [last-state (last @game-history)] 
-     (if (and 
-          (not (:playback new-state)) 
+   (let [last-state (last @game-history)]
+     (if (and
+          (not (:playback new-state))
           (or (not= (:heaps last-state) (:heaps  new-state))
               (not= (:primed last-state) (:primed  new-state))
               (and
                (not= (:flash-key last-state) (:flash-key  new-state))
                (not= (:flash-key last-state) (replay-flash (:flash-key  new-state))))
               (not= (:pairing last-state) (:pairing  new-state))))
-       (swap! game-history conj 
-              (assoc new-state 
+       (swap! game-history conj
+              (assoc new-state
                 :playhead (count @game-history)
                 :flash-key (replay-flash (:flash-key new-state))
                 :playback (:flash-key new-state)
@@ -139,14 +139,15 @@
   (let [heaps (apply rand-heaps @routing/level-spec)]
     (do
       (.preventDefault e)
-      (swap! game #(assoc % 
+      (.stopPropagation e)
+      (swap! game #(assoc %
                      :primed nil
                      :heaps heaps
                      :pairing 0
                      :hovered nil
                      :status :none
                      :best nil
-                     :countdown 20 
+                     :countdown 20
                      :flash-key :timer
                      :playback false
                      :playhead 0))
@@ -170,15 +171,23 @@
   (swap! game saved-game key-action @game-history))
 
 (defn first! [e]
+  (.preventDefault e)
+  (.stopPropagation e)
   (show-frame! :first))
 
 (defn back! [e]
+  (.preventDefault e)
+  (.stopPropagation e)
   (show-frame! :back))
 
 (defn next! [e]
+  (.preventDefault e)
+  (.stopPropagation e)
   (show-frame! :next))
 
 (defn last! [e]
+  (.preventDefault e)
+  (.stopPropagation e)
   (show-frame! :last))
 
 (defn replay-flash [key]
@@ -193,10 +202,11 @@
 (defn playback! [e]
   (do
     (.preventDefault e)
+    (.stopPropagation e)
     (if (:playback @game)
-      (do 
+      (do
         (reset! game (last @game-history))
-        (swap! game #(assoc % 
+        (swap! game #(assoc %
                        :playback false
                        :flash-key (:playback @game))))
       (show-frame! :first)
@@ -207,7 +217,7 @@
     ))
 
 (defn flashes [a-key]
-  (condp = a-key 
+  (condp = a-key
     :none ""
     :als "Al's turn"
     :replay-als "Replaying Al's turn"
@@ -232,8 +242,8 @@
 
 (defn groups [pairing n]
   "the power 2 groups to display for each pairing"
-  (map wrap-groups (keep-indexed #(if (<= %1 pairing) 
-                                (if (< %1 pairing) 
+  (map wrap-groups (keep-indexed #(if (<= %1 pairing)
+                                (if (< %1 pairing)
                                   (mod  %2 2)
                                   %2)) (grouper n))))
 
@@ -243,29 +253,29 @@
 (defn unwrap [alist] (apply concat alist))
 
 (defn expanded-groups [pairing n]
-  (let [egs (map-indexed 
-             #(range 0 (* (Math.pow 2 %1) (first %2))) 
+  (let [egs (map-indexed
+             #(range 0 (* (Math.pow 2 %1) (first %2)))
              (groups pairing n))]
 
     (map #(partition-all (Math.pow 2 pairing) %) egs)))
 
 (defn group-offsets [pairing n]
-  (map-indexed 
-   (fn [gx g] 
+  (map-indexed
+   (fn [gx g]
      (let [gstart (- (Math.pow 2 gx) 2)
            ioff #(* i-gp %)
            glen (inc (Math.pow 1.4 gx))
-           goff (map-indexed 
+           goff (map-indexed
                  (fn [g,m]
                    (map-indexed
                     (if (not= 0 pairing)
-                      #(+ (ioff %1) 
+                      #(+ (ioff %1)
                           (+ (* 0.7 (+ g -0.5)) glen (* o-gp gstart))
                           %2)
-                      #(+ (ioff %1) 
+                      #(+ (ioff %1)
                           (+ (* 0.3 g) 0.8 )
                           %2))
-                    m)) 
+                    m))
                  g)]
        goff)) (expanded-groups pairing n)))
 
@@ -285,7 +295,7 @@
 
 (defn take-one-moves [heaps]
   "return a list of possible random moves which take 1, or nil if heaps are all empty"
-  (let [x-ifnz (fn [index heap-size] 
+  (let [x-ifnz (fn [index heap-size]
                  (if (> heap-size 0) [index 1]))]
     (seq (keep-indexed x-ifnz heaps))))
 
@@ -310,6 +320,7 @@
   "continue game - hide popover"
   (do
     (.preventDefault e)
+    (.stopPropagation e)
     (swap! game #(assoc %
                    :status :none))))
 
@@ -319,15 +330,15 @@
 
 (defn is-primed? [k n]
   "is item at col k, height n, primed for deletion?"
-  (let  [[k' n' :as p] (:primed @game)]  
+  (let  [[k' n' :as p] (:primed @game)]
     (and p (= k k') (= n n'))))
 
 (defn is-highlighted? [k n]
   "is item at col k, height n, highlighted for deletion?"
   (let [[k' n' :as p] (:primed @game)
         [kh nh :as h] (:hovered @game)]
-    (or 
-     (and h (= k kh) (>= n nh)) 
+    (or
+     (and h (= k kh) (>= n nh))
      (and p (= k k') (>= n n')))))
 
 (defn un-prime! []
@@ -373,7 +384,7 @@
 (defn from-k-take-n! [k n]
   (let [heaps (:heaps @game)
         new-heaps (heaps-at-k-take-n heaps k n)]
-    (do 
+    (do
       (swap! game #(assoc % :heaps new-heaps))
       #_(println "taking " n " from " k))))
 
@@ -382,7 +393,7 @@
 (defn prime-or-delete! [k n]
   "item k n is to be primed for deletion, or deleted if already primed"
   (if (or (= (:flash-key @game) :yours)
-          (= (:flash-key @game) :timer)) 
+          (= (:flash-key @game) :timer))
     (if (is-primed? k n)
       (do
 ;;
@@ -393,7 +404,7 @@
 
         (let [heaps (:heaps @game)
               new-heaps (heaps-at-k-take-n heaps k (at-k-leave-n! k n))]
-          (swap! game #(assoc % 
+          (swap! game #(assoc %
                          :flash-key :als
                          :countdown 2
                          :primed nil
@@ -403,10 +414,10 @@
       (prime! k n))))
 
 (defn make-best-move! [[k n]]
-  (do 
+  (do
     (let [heaps (:heaps @game)
           new-heaps (heaps-at-k-take-n heaps k n)]
-      (swap! game #(assoc % 
+      (swap! game #(assoc %
                      :countdown nil
                      :flash-key :yours
                      :pairing 0
@@ -426,7 +437,7 @@
       (swap! game #(assoc % :hovered [k n]))
       )))
 
-(defn next-pairing [p] 
+(defn next-pairing [p]
   (inc p))
 
 (defn pair! [e]
@@ -436,6 +447,7 @@
         pairing (if (>= p (max-pairing heaps)) 0 (next-pairing p))]
     (do
       (.preventDefault e)
+      (.stopPropagation e)
       (swap! game #(assoc % :pairing pairing))
       (play-sound drips))
     )
@@ -453,6 +465,7 @@
   (let [[k n] (reader/read-string (-> event .-target .-id))]
     (do
       (.preventDefault event)
+      (.stopPropagation event)
       #_(you-clicked-on k n)
       (prime-or-delete! k n)
      )))
@@ -462,6 +475,7 @@
   (let [[k n] (reader/read-string (-> event .-target .-id))]
     (do
       (.preventDefault event)
+      (.stopPropagation event)
       (mouse-over! k n)
      )))
 
@@ -470,6 +484,7 @@
   (let [[k n] (reader/read-string (-> event .-target .-id))]
     (do
       (.preventDefault event)
+      (.stopPropagation event)
       (mouse-out! k n)
      )))
 
@@ -478,20 +493,20 @@
 ;;
 (r/defc tap-button < r/reactive [label handler key & [attrs]]
   (if attrs
-    [:button (merge attrs {:on-click handler :on-touch-end handler :key key}) label]
-    [:button {:on-click handler :on-touch-end handler :key key} label]
+    [:button (merge attrs {:on-click handler :on-touch-start handler :key key}) label]
+    [:button {:on-click handler :on-touch-start handler :key key} label]
     ))
 
 (declare replay-button)
 
 (r/defc new-game < r/reactive []
   [:div
-   (tap-button "New Game" start! "i4") 
+   (tap-button "New Game" start! "i4")
    (tap-button "OK" continue! "i5")
    (replay-button "i6")]
 )
 
-(r/defc instructions < r/reactive [] 
+(r/defc instructions < r/reactive []
   [:div
    [:p {:key "i1"} "Take turns to remove as many drips as you like from a single drip trail."]
    [:p {:key "i2"} "Click once to choose, and once again in the same place to confirm. Take the very last drip to win the game."]
@@ -505,7 +520,7 @@ Al the computer loses patience and starts anyway."]
 
 (r/defc well-done < r/reactive []
   [:div
-   [:p {:key "i1"} "Well done."] 
+   [:p {:key "i1"} "Well done."]
    [:p {:key "i2"} "If you understand the winning strategy you should be able to beat Al whenever you like! If not, keep trying till you've pinned it down."]
    [:p {:key "i3"} "We'd love to hear your explanation of how to win. Email "
     [:a {:href "mailto:wild@maths.org"} "wild@maths.org"]
@@ -524,7 +539,7 @@ Al the computer loses patience and starts anyway."]
   {:none {:visible false}
    :instructions {:visible true
                   :title "Rules"
-                  :body instructions 
+                  :body instructions
                   }
    :you-won {:visible true
              :title "You won!"
@@ -549,9 +564,9 @@ Al the computer loses patience and starts anyway."]
 
 
 (defn primed [g k i]
-  (if (or 
+  (if (or
        (= (:flash-key g) :timer)
-       (= (:flash-key g) :yours) 
+       (= (:flash-key g) :yours)
        (= (:flash-key g) :replay-yours))
     (if (is-primed? k i) "primed" "")))
 
@@ -559,37 +574,37 @@ Al the computer loses patience and starts anyway."]
   "render item i in kth heap"
   (let [g @game
         key (str "[" k " " i "]")]
-    [:div 
-     
+    [:div
+
      {:id key
       :class (str  "blobs " (primed g k i))
       :on-click (fn [e] (item-clicked e))
-      :on-touch-end (fn [e] (item-clicked e))
+      :on-touch-start (fn [e] (item-clicked e))
       :on-mouse-over (fn [e] (item-over e))
       :on-mouse-out (fn [e] (item-out e))
-      :style 
+      :style
       {:left (px (+ 0.3 (* 2 k)))
        :top (px (+ (item-offset pairing n i) 0.8))
        :width (px (* radius 2))
        :height (px (* radius 2))
-       :background-color 
-       (if (or 
-            (= (:flash-key g) :als) 
+       :background-color
+       (if (or
+            (= (:flash-key g) :als)
             (= (:flash-key g) :replay-als))
-         (if (is-highlighted? k i) 
-           "rgba(255, 180, 0, 1)" 
+         (if (is-highlighted? k i)
+           "rgba(255, 180, 0, 1)"
            "rgba(219, 133, 215, 1)")
-         (if (is-highlighted? k i) 
-           "rgba(235, 100, 0, 1)" 
+         (if (is-highlighted? k i)
+           "rgba(235, 100, 0, 1)"
            "rgba(80, 100, 255, 1)")
          )
        }}
-     
+
      ]))
 
 
 (r/defc render-html-heap < r/reactive [pairing k n]
-  [:div 
+  [:div
    (map #(r/with-props render-html-item pairing k n % :rum/key (str "h" %)) (range n))]
   )
 
@@ -603,7 +618,7 @@ Al the computer loses patience and starts anyway."]
   )
 
 (r/defc render-flash < r/reactive [fkey flash-msg score]
-  (let [[yours als] score] 
+  (let [[yours als] score]
     [:div.flash-box {:class (subs (str fkey) 1)}
      [:span.msg {:key "f1"} flash-msg]
      [:span.score {:key "f2"} "Al: " als " You: " yours]
@@ -616,8 +631,8 @@ Al the computer loses patience and starts anyway."]
   [:div.bordered
    {:style {:background-position (str  0 "px " (divider-offset pairing) "px")}}
    (render-flash fkey flash-msg score)
-   [:div.playfield  
-    [:div.pad 
+   [:div.playfield
+    [:div.pad
      (render-html-heaps pairing heaps)]]])
 
 (r/defc para < r/reactive [text]
@@ -639,8 +654,8 @@ Al the computer loses patience and starts anyway."]
   (tap-button [:i {:class (str "fa fa-" icon)}] handler key attrs))
 
 (r/defc icon-label < r/reactive [icon label]
-  [:span  
-   [:span {:class (str "fa fa-" icon)}] 
+  [:span
+   [:span {:class (str "fa fa-" icon)}]
    (str " " label)])
 
 (r/defc replay-button < r/reactive [key]
@@ -649,16 +664,16 @@ Al the computer loses patience and starts anyway."]
 (r/defc render-toolbar < r/reactive [g]
   (let [level (:level g)
         playback (:playback g)
-        ghc (count (r/react game-history))] 
+        ghc (count (r/react game-history))]
     [:div {:class "toolbar"}
      (if playback
        [:span {:class "controls" :key "t1"}
         (tap-button "New game" start! "stb")
         [:span {:key "t0" :class "left footer"}
-         (if (not= (:playhead g) 0) 
+         (if (not= (:playhead g) 0)
            (icon-button "step-backward" back! "back")
            (icon-button "step-backward disabled" back! "back" {:class "disabled"}))
-         (if (< (inc (:playhead g)) ghc) 
+         (if (< (inc (:playhead g)) ghc)
            (icon-button "step-forward" next! "next")
            (icon-button "step-forward disabled" next! "next" {:class "disabled"}))]
         [:span {:key "f1" :class "center"}
@@ -680,7 +695,7 @@ Al the computer loses patience and starts anyway."]
             (replay-button "replay")])
          (tap-button "Pairer" pair! "prb")
          ]]
-        
+
        )]))
 
 (r/defc render-game < r/reactive []
@@ -717,7 +732,7 @@ Al the computer loses patience and starts anyway."]
                             [[(inc yu) al] :you-won]
                             )]
       (swap! game #(assoc %
-                     :status status 
+                     :status status
                      :flash-key :game-over
                      :score score)))))
 
@@ -729,15 +744,15 @@ Al the computer loses patience and starts anyway."]
          (not= fk :replay-als)
          (not= fk :replay-yours)
          (not= fk :playback)
-         (not= fk :game-over) 
+         (not= fk :game-over)
          timer)
-      (cond  
+      (cond
        (= timer 0) (let [[k n] (show-best-move!)]
                      (swap! game #(assoc %
                                     :countdown (- timer 1)
                                     :flash-key :als
                                     :best [k n])))
-       (= timer -3) (do 
+       (= timer -3) (do
                       (make-best-move! (:best @game))
                       (if (= 0 (reduce + (:heaps @game)))
                         (show-a-winner!))
@@ -751,5 +766,3 @@ Al the computer loses patience and starts anyway."]
   (js/setInterval tick! one-second))
 
 (add-watch routing/level-spec "akey" game-init)
-
-
