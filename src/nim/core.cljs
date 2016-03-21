@@ -1,10 +1,8 @@
-(ns ^:figwheel-no-load nim.core
+(ns ^:figwheel-always nim.core
     (:require [rum :as r]
               [cljs.reader :as reader]
               [cljsjs.react]
-              [routing.core :as routing]
-              )
-)
+              [routing.core :as routing]))
 
 (enable-console-print!)
 
@@ -513,7 +511,7 @@
    [:p {:key "i3"} "Press 'New Game' to start, you then have 20 seconds to make the first move before
 Al the computer loses patience and starts anyway."]
    (new-game)
-   [:p {:key "i6"} "The Pairer button can help you calculate a winning move by rearranging the drips. Each press makes a different arrangement."]
+   [:p {:key "i6"} "When present, the Pairer button can help you calculate a winning move by rearranging the drips. Each press makes a different arrangement."]
    (tap-button "Pairer" pair! "i7")
    ])
 

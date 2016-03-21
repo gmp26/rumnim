@@ -4,22 +4,24 @@
   :license {:name "MIT"
             :url "http://opensource.org/licenses/MIT"}
 
-  :dependencies [[org.clojure/clojure "1.6.0"]
-                 [org.clojure/clojurescript "0.0-3211"]
+  :dependencies [[org.clojure/clojure "1.7.0"]
+                 [org.clojure/clojurescript "1.7.122"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [rum "0.2.6"]
-                 [secretary "1.2.3"]]
+                 [secretary "1.2.3"]
+                 [figwheel-sidecar "0.5.0"]]
 
-  :plugins [[lein-cljsbuild "1.0.5"]
-            [lein-figwheel "0.3.3"]]
+  :plugins [[lein-cljsbuild "1.1.0"]
+            ;[lein-figwheel "0.3.3"]
+            ]
 
-  :source-paths ["src"]
+  :source-paths ["src" "script"]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
   
   :cljsbuild {
     :builds [{:id "dev"
-              :source-paths ["src"]
+              :source-paths ["src" "script"]
               
               ;; :figwheel { :on-jsload "nim.core/on-js-reload" }
 
@@ -34,7 +36,7 @@
                          :warnings  {:single-segment-namespace false }}}
 
              {:id "min"
-              :source-paths ["src"]
+              :source-paths ["src" "script"]
               :compiler {:output-to "resources/public/js/compiled/build/nim.js"
                          :main nim.core                         
                          :optimizations :advanced
@@ -42,7 +44,7 @@
                          :warnings  {:single-segment-namespace false}}}
 
              {:id "debug"
-              :source-paths ["src"]
+              :source-paths ["src" "script"]
               :compiler {:output-to "resources/public/js/compiled/debug/nim.js"
                          :main nim.core                         
                          :output-dir "resources/public/js/compiled/debug"
