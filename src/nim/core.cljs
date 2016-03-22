@@ -1,5 +1,5 @@
 (ns ^:figwheel-always nim.core
-    (:require [rum :as r]
+    (:require [rum.core :as r]
               [cljs.reader :as reader]
               [cljsjs.react]
               [routing.core :as routing]))
@@ -74,23 +74,24 @@
 (defn game-setup [new-level-spec]
   "setup or restart the game"
   (let [heaps (apply rand-heaps new-level-spec)]
-    (do
-      (.initializeTouchEvents js/React true)
-      {
-       :primed nil
-       :heaps heaps
-       :pairing 0
-       :hovered nil
-       :status :none
-       :flash-key :timer
-       :countdown 20
-       :best nil
-       :score [0 0]
-       :playback false
-       :playhead 0
-       })))
+    {
+     :primed nil
+     :heaps heaps
+     :pairing 0
+     :hovered nil
+     :status :none
+     :flash-key :timer
+     :countdown 20
+     :best nil
+     :score [0 0]
+     :playback false
+     :playhead 0
+     }))
 
 (def game (atom (game-setup @routing/level-spec)))
+
+(defn big-enough [game]
+  (> (apply max (:heaps game)) 4))
 
 ;;
 ;; Don't confuse with browser history! This records the history of
@@ -679,7 +680,8 @@ Al the computer loses patience and starts anyway."]
         [:span {:key "t2" :class "right"}
          [:span {:class "footer" :key "rep"}
           (tap-button "Resume" playback! "plb" )]
-         (tap-button "Pairer" pair! "prb")
+         (when (big-enough g)
+           (tap-button "Pairer" pair! "prb"))
          ]]
 
        [:span {:class "controls" :key "t2"}
@@ -691,7 +693,8 @@ Al the computer loses patience and starts anyway."]
          (if (> ghc 1)
            [:span {:class "footer" :key "rep"}
             (replay-button "replay")])
-         (tap-button "Pairer" pair! "prb")
+         (when (big-enough g)
+           (tap-button "Pairer" pair! "prb"))
          ]]
 
        )]))

@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/rum-figwheel-lein.iml" filepath="$PROJECT_DIR$/rum-figwheel-lein.iml" />
+      <module fileurl="file://$PROJECT_DIR$/rum-nim.iml" filepath="$PROJECT_DIR$/rum-nim.iml" />
     </modules>
   </component>
 </project>

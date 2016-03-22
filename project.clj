@@ -1,4 +1,4 @@
-(defproject rum-figwheel-lein "0.1.0-SNAPSHOT"
+(defproject rum-nim "0.1.0-SNAPSHOT"
   :description "rumnim is a nim environment based on cljs and rum"
   :url "https://github.com/gmp26/rumnim"
   :license {:name "MIT"
@@ -7,23 +7,23 @@
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/clojurescript "1.7.122"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
-                 [rum "0.2.6"]
+                 [cljsjs/react "0.14.3-0"]
+                 [rum "0.6.0"]
                  [secretary "1.2.3"]
-                 [figwheel-sidecar "0.5.0"]]
+                 [figwheel-sidecar "0.5.0"]
+                 ]
 
   :plugins [[lein-cljsbuild "1.1.0"]
-            ;[lein-figwheel "0.3.3"]
+            ;[lein-figwheel "0.5.0-6"]
             ]
 
-  :source-paths ["src" "script"]
-
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
-  
+
   :cljsbuild {
     :builds [{:id "dev"
               :source-paths ["src" "script"]
-              
-              ;; :figwheel { :on-jsload "nim.core/on-js-reload" }
+
+              :figwheel true
 
               :compiler {:main nim.core
                          :asset-path "js/compiled/out"
@@ -36,17 +36,15 @@
                          :warnings  {:single-segment-namespace false }}}
 
              {:id "min"
-              :source-paths ["src" "script"]
               :compiler {:output-to "resources/public/js/compiled/build/nim.js"
-                         :main nim.core                         
+                         :main nim.core
                          :optimizations :advanced
                          :pretty-print false
                          :warnings  {:single-segment-namespace false}}}
 
              {:id "debug"
-              :source-paths ["src" "script"]
               :compiler {:output-to "resources/public/js/compiled/debug/nim.js"
-                         :main nim.core                         
+                         :main nim.core
                          :output-dir "resources/public/js/compiled/debug"
                          :asset-path "js/compiled/debug"
                          :optimizations :advanced
@@ -54,7 +52,7 @@
                          :warnings  {:single-segment-namespace false}}}]}
 
   :figwheel {
-             ;; :http-server-root "public" ;; default and assumes "resources" 
+             ;; :http-server-root "public" ;; default and assumes "resources"
              ;; :server-port 3449 ;; default
              :css-dirs ["resources/public/css"] ;; watch and update CSS
 
@@ -80,5 +78,5 @@
              ;; :repl false
 
              ;; to configure a different figwheel logfile path
-             ;; :server-logfile "tmp/logs/figwheel-logfile.log" 
+             ;; :server-logfile "tmp/logs/figwheel-logfile.log"
              })
