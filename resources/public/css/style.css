@@ -19,6 +19,10 @@ h1 {
     max-width:300px;
 }
 
+#game {
+    margin-left: 300px;
+}
+
 .toolbar {
     padding:0;
     margin:0;
