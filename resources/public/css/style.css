@@ -9,6 +9,7 @@ html, body {
     color: black;
     font-family: "Helvetica Neue", "Arial", sans-serif;
     max-width:300px;
+    margin: auto auto;
 }
 
 h1 {

@@ -714,7 +714,7 @@ Al the computer loses patience and starts anyway."]
       (r/with-props render-html-board pairing heaps fkey flash-msg score :rum/key "board")
       (r/with-props render-popover :rum/key "popup")
       ]
-     ;; (debug-game g)
+     (debug-game g)
      ])
   )
 
